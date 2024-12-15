@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GbxRemote.XmlRpc", "GbxRemote.XmlRpc\GbxRemote.XmlRpc.csproj", "{9E70CC60-5BA4-4411-9C71-02225C1F4FF4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GbxRemote.XmlRpc.Tests", "GbxRemote.XmlRpc.Tests\GbxRemote.XmlRpc.Tests.csproj", "{885BD403-7FBA-47E0-928F-84C8CF0E819A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{9E70CC60-5BA4-4411-9C71-02225C1F4FF4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9E70CC60-5BA4-4411-9C71-02225C1F4FF4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9E70CC60-5BA4-4411-9C71-02225C1F4FF4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{885BD403-7FBA-47E0-928F-84C8CF0E819A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{885BD403-7FBA-47E0-928F-84C8CF0E819A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{885BD403-7FBA-47E0-928F-84C8CF0E819A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{885BD403-7FBA-47E0-928F-84C8CF0E819A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
