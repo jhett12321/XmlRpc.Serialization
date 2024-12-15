@@ -5,6 +5,7 @@ using NUnit.Framework;
 
 namespace GbxRemote.XmlRpc.Tests.Tests;
 
+[TestFixture]
 public sealed class XmlRpcSerializerTests
 {
   [Test]
