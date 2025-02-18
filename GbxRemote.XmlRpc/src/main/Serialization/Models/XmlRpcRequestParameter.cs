@@ -1,6 +1,6 @@
 ﻿using System.Xml.Serialization;
 
-namespace GbxRemote.XmlRpc.Models;
+namespace GbxRemote.XmlRpc.Serialization.Models;
 
 public sealed class XmlRpcRequestParameter
 {

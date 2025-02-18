@@ -2,7 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Xml.Serialization;
 
-namespace GbxRemote.XmlRpc.Models;
+namespace GbxRemote.XmlRpc.Serialization.Models;
 
 [XmlRoot("methodCall")]
 public sealed class XmlRpcRequestMessage
@@ -14,7 +14,7 @@ public sealed class XmlRpcRequestMessage
   [XmlArrayItem("param")]
   public List<XmlRpcRequestParameter>? Parameters { get; set; }
 
-  private XmlRpcRequestMessage() {}
+  public XmlRpcRequestMessage() {}
 
   [SetsRequiredMembers]
   public XmlRpcRequestMessage(string methodName, params object[]? parameters)
