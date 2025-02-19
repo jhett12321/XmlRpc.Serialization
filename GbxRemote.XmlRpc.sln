@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GbxRemote.XmlRpc", "GbxRemo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GbxRemote.XmlRpc.Tests", "GbxRemote.XmlRpc.Tests\GbxRemote.XmlRpc.Tests.csproj", "{885BD403-7FBA-47E0-928F-84C8CF0E819A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GbxRemote.XmlRpc.Serialization.Generators", "GbxRemote.XmlRpc.Serialization.Generators\GbxRemote.XmlRpc.Serialization.Generators.csproj", "{EB5AB493-9249-4003-ABC5-8D46A034AE4E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{885BD403-7FBA-47E0-928F-84C8CF0E819A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{885BD403-7FBA-47E0-928F-84C8CF0E819A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{885BD403-7FBA-47E0-928F-84C8CF0E819A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EB5AB493-9249-4003-ABC5-8D46A034AE4E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EB5AB493-9249-4003-ABC5-8D46A034AE4E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EB5AB493-9249-4003-ABC5-8D46A034AE4E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EB5AB493-9249-4003-ABC5-8D46A034AE4E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
