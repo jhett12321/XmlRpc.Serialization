@@ -5,8 +5,4 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\GbxRemote.XmlRpc.Serialization\GbxRemote.XmlRpc.Serialization.csproj" />
-    </ItemGroup>
-
 </Project>
