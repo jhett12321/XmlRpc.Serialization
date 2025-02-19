@@ -1,8 +1,6 @@
-using System.Dynamic;
-using System.Runtime.Serialization;
 using System.Text;
-using GbxRemote.XmlRpc.Client;
 using GbxRemote.XmlRpc.Serialization;
+using GbxRemote.XmlRpc.Serialization.Exceptions;
 using GbxRemote.XmlRpc.Serialization.Models;
 using GbxRemote.XmlRpc.Tests.Attributes;
 using NUnit.Framework;
@@ -13,21 +11,24 @@ namespace GbxRemote.XmlRpc.Tests.Tests;
 public sealed class XmlRpcSerializerTests
 {
   [Test]
-  [TestCase("""<?xml version="1.0" encoding="utf-8"?><methodCall><methodName>Authenticate</methodName><params><param><value>SuperAdmin</value></param><param><value>SuperAdmin</value></param></params></methodCall>""",
+  [TestCase("""<?xml version="1.0" encoding="utf-8"?><methodCall><methodName>Authenticate</methodName><params><param><value><string>SuperAdmin</string></value></param><param><value><string>SuperAdmin</string></value></param></params></methodCall>""",
     "Authenticate", "SuperAdmin", "SuperAdmin")]
   [TestCase("""<?xml version="1.0" encoding="utf-8"?><methodCall><methodName>system.listMethods</methodName></methodCall>""",
     "system.listMethods")]
-  public async Task SerializeValidRequestCreatesValidXml(string expected, string methodName, params object[] args)
+  public void SerializeValidRequestCreatesValidXml(string expected, string methodName, params string[] args)
   {
-    XmlRpcSerializer serializer = new XmlRpcSerializer();
-    XmlRpcRequestMessage requestMessage = new XmlRpcRequestMessage(methodName, args);
+    XmlRpcRequestMessage requestMessage = new XmlRpcRequestMessage(methodName);
+    foreach (string arg in args)
+    {
+      requestMessage.Param<string>(arg);
+    }
 
-    byte[] serialized = await serializer.SerializeAsync(requestMessage);
+    byte[] serialized = XmlRpcSerializer.Serialize(requestMessage);
     Assert.That(Encoding.UTF8.GetString(serialized), Is.EqualTo(expected));
   }
 
   [Test]
-  [TestCase<XmlRpcResponseBoolean>("""
+  [TestCase<bool>("""
                                    <?xml version="1.0" encoding="UTF-8"?>
                                    <methodResponse>
                                    <params>
@@ -35,7 +36,7 @@ public sealed class XmlRpcSerializerTests
                                    </params>
                                    </methodResponse>
                                    """, true)]
-  [TestCase<XmlRpcResponseInt32>("""
+  [TestCase<int>("""
                                    <?xml version="1.0" encoding="UTF-8"?>
                                    <methodResponse>
                                    <params>
@@ -43,7 +44,7 @@ public sealed class XmlRpcSerializerTests
                                    </params>
                                    </methodResponse>
                                    """, -5)]
-  [TestCase<XmlRpcResponseInt32>("""
+  [TestCase<int>("""
                                  <?xml version="1.0" encoding="UTF-8"?>
                                  <methodResponse>
                                  <params>
@@ -51,7 +52,7 @@ public sealed class XmlRpcSerializerTests
                                  </params>
                                  </methodResponse>
                                  """, 1)]
-  [TestCase<XmlRpcResponseDouble>("""
+  [TestCase<double>("""
                                  <?xml version="1.0" encoding="UTF-8"?>
                                  <methodResponse>
                                  <params>
@@ -59,7 +60,7 @@ public sealed class XmlRpcSerializerTests
                                  </params>
                                  </methodResponse>
                                  """, -2.512345D)]
-  [TestCase<XmlRpcResponseDouble>("""
+  [TestCase<double>("""
                                  <?xml version="1.0" encoding="UTF-8"?>
                                  <methodResponse>
                                  <params>
@@ -67,7 +68,7 @@ public sealed class XmlRpcSerializerTests
                                  </params>
                                  </methodResponse>
                                  """, 0.5D)]
-  [TestCase<XmlRpcResponseString>("""
+  [TestCase<string>("""
                                  <?xml version="1.0" encoding="UTF-8"?>
                                  <methodResponse>
                                  <params>
@@ -75,13 +76,30 @@ public sealed class XmlRpcSerializerTests
                                  </params>
                                  </methodResponse>
                                  """, "Return an array of all available XML-RPC methods on this server.")]
-  public void DeserializeValidResponseCreatesValidValue<T>(string xml, object value) where T : IXmlRpcResponseValue, new()
+  public void DeserializeValidResponseCreatesValidValue<T>(string xml, object value)
   {
-    XmlRpcSerializer serializer = new XmlRpcSerializer();
     byte[] data = Encoding.UTF8.GetBytes(xml);
 
-    T response = serializer.Deserialize<T>(data);
-    Assert.That(response.Value, Is.EqualTo(value));
+    T response = XmlRpcSerializer.Deserialize<T>(data);
+    Assert.That(response, Is.EqualTo(value));
+  }
+
+  [Test]
+  [TestCase("""
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <methodResponse>
+                    <params>
+                    <param><value><base64>eW91IGNhbid0IHJlYWQgdGhpcyE=</base64></value></param>
+                    </params>
+                    </methodResponse>
+                    """, "eW91IGNhbid0IHJlYWQgdGhpcyE=")]
+  public void DeserializeValidBase64ResponseCreatesValidValue(string xml, string expected)
+  {
+    byte[] data = Encoding.UTF8.GetBytes(xml);
+    byte[] response = XmlRpcSerializer.Deserialize<byte[]>(data);
+    string base64Response = Convert.ToBase64String(response);
+
+    Assert.That(base64Response, Is.EqualTo(expected));
   }
 
   [Test]
@@ -107,11 +125,10 @@ public sealed class XmlRpcSerializerTests
             """)]
   public void DeserializeValidArrayResponseCreatesValidValue(string xml, params object[] values)
   {
-    XmlRpcSerializer serializer = new XmlRpcSerializer();
     byte[] data = Encoding.UTF8.GetBytes(xml);
 
-    XmlRpcResponseArray response = serializer.Deserialize<XmlRpcResponseArray>(data);
-    Assert.That(response.Value, Is.EquivalentTo(values));
+    List<string> response = XmlRpcSerializer.Deserialize<List<string>>(data);
+    Assert.That(response, Is.EquivalentTo(values));
   }
 
   [Test]
@@ -131,15 +148,13 @@ public sealed class XmlRpcSerializerTests
                        </methodResponse>
                        """;
 
-    dynamic expected = new ExpandoObject();
+    ServerStatusResponse expected = new ServerStatusResponse();
     expected.Code = 4;
     expected.Name = "Running - Play";
 
-    XmlRpcSerializer serializer = new XmlRpcSerializer();
     byte[] data = Encoding.UTF8.GetBytes(xml);
 
-    XmlRpcResponseStruct responseStruct = serializer.Deserialize<XmlRpcResponseStruct>(data);
-    dynamic response = responseStruct.Value!;
+    ServerStatusResponse response = XmlRpcSerializer.Deserialize<ServerStatusResponse>(data, ServerStatusResponseContext.Instance);
 
     Assert.That(response.Code, Is.EqualTo(expected.Code));
     Assert.That(response.Name, Is.EqualTo(expected.Name));
@@ -191,7 +206,7 @@ public sealed class XmlRpcSerializerTests
                        </methodResponse>
                        """;
 
-    dynamic expected = new ExpandoObject();
+    PlayerInfoResponse expected = new PlayerInfoResponse();
     expected.Uptime = 10279;
     expected.NbrConnection = 1;
     expected.MeanConnectionTime = 78;
@@ -200,9 +215,9 @@ public sealed class XmlRpcSerializerTests
     expected.SendNetRate = 65;
     expected.TotalReceivingSize = 18852;
     expected.TotalSendingSize = 5169;
-    expected.PlayerNetInfos = new List<dynamic>();
+    expected.PlayerNetInfos = new List<PlayerNetInfo>();
 
-    dynamic expectedPlayerInfo = new ExpandoObject();
+    PlayerNetInfo expectedPlayerInfo = new PlayerNetInfo();
     expectedPlayerInfo.Login = "AAAAaAaAAa0AaAaAaaaaAA";
     expectedPlayerInfo.IPAddress = "127.0.0.1";
     expectedPlayerInfo.StateUpdateLatency = 0;
@@ -212,42 +227,48 @@ public sealed class XmlRpcSerializerTests
 
     expected.PlayerNetInfos.Add(expectedPlayerInfo);
 
-    XmlRpcSerializer serializer = new XmlRpcSerializer();
     byte[] data = Encoding.UTF8.GetBytes(xml);
 
-    XmlRpcResponseStruct responseStruct = serializer.Deserialize<XmlRpcResponseStruct>(data);
-    dynamic response = responseStruct.Value!;
+    PlayerInfoResponse response = XmlRpcSerializer.Deserialize<PlayerInfoResponse>(data, PlayerInfoResponseContext.Instance);
 
-    Assert.That(response.Uptime, Is.EqualTo(expected.Uptime));
-    Assert.That(response.NbrConnection, Is.EqualTo(expected.NbrConnection));
-    Assert.That(response.MeanConnectionTime, Is.EqualTo(expected.MeanConnectionTime));
-    Assert.That(response.MeanNbrPlayer, Is.EqualTo(expected.MeanNbrPlayer));
-    Assert.That(response.RecvNetRate, Is.EqualTo(expected.RecvNetRate));
-    Assert.That(response.SendNetRate, Is.EqualTo(expected.SendNetRate));
-    Assert.That(response.TotalReceivingSize, Is.EqualTo(expected.TotalReceivingSize));
-    Assert.That(response.TotalSendingSize, Is.EqualTo(expected.TotalSendingSize));
-    Assert.That(response.PlayerNetInfos.Count, Is.EqualTo(expected.PlayerNetInfos.Count));
+    Assert.Multiple(() =>
+    {
+      Assert.That(response.Uptime, Is.EqualTo(expected.Uptime));
+      Assert.That(response.NbrConnection, Is.EqualTo(expected.NbrConnection));
+      Assert.That(response.MeanConnectionTime, Is.EqualTo(expected.MeanConnectionTime));
+      Assert.That(response.MeanNbrPlayer, Is.EqualTo(expected.MeanNbrPlayer));
+      Assert.That(response.RecvNetRate, Is.EqualTo(expected.RecvNetRate));
+      Assert.That(response.SendNetRate, Is.EqualTo(expected.SendNetRate));
+      Assert.That(response.TotalReceivingSize, Is.EqualTo(expected.TotalReceivingSize));
+      Assert.That(response.TotalSendingSize, Is.EqualTo(expected.TotalSendingSize));
+      Assert.That(response.PlayerNetInfos.Count, Is.EqualTo(expected.PlayerNetInfos.Count));
+    });
 
-    dynamic responsePlayerInfo = response.PlayerNetInfos[0];
-    Assert.That(responsePlayerInfo.Login, Is.EqualTo(expectedPlayerInfo.Login));
-    Assert.That(responsePlayerInfo.IPAddress, Is.EqualTo(expectedPlayerInfo.IPAddress));
-    Assert.That(responsePlayerInfo.StateUpdateLatency, Is.EqualTo(expectedPlayerInfo.StateUpdateLatency));
-    Assert.That(responsePlayerInfo.StateUpdatePeriod, Is.EqualTo(expectedPlayerInfo.StateUpdatePeriod));
-    Assert.That(responsePlayerInfo.LatestNetworkActivity, Is.EqualTo(expectedPlayerInfo.LatestNetworkActivity));
-    Assert.That(responsePlayerInfo.PacketLossRate, Is.EqualTo(expectedPlayerInfo.PacketLossRate));
+    PlayerNetInfo responsePlayerInfo = response.PlayerNetInfos[0];
+
+    Assert.Multiple(() =>
+    {
+      Assert.That(responsePlayerInfo.Login, Is.EqualTo(expectedPlayerInfo.Login));
+      Assert.That(responsePlayerInfo.IPAddress, Is.EqualTo(expectedPlayerInfo.IPAddress));
+      Assert.That(responsePlayerInfo.StateUpdateLatency, Is.EqualTo(expectedPlayerInfo.StateUpdateLatency));
+      Assert.That(responsePlayerInfo.StateUpdatePeriod, Is.EqualTo(expectedPlayerInfo.StateUpdatePeriod));
+      Assert.That(responsePlayerInfo.LatestNetworkActivity, Is.EqualTo(expectedPlayerInfo.LatestNetworkActivity));
+      Assert.That(responsePlayerInfo.PacketLossRate, Is.EqualTo(expectedPlayerInfo.PacketLossRate));
+    });
   }
 
   [Test]
   [TestCase("""<?xml version="1.0" encoding="UTF-8"?><methodResponse><fault><value><struct><member><name>faultCode</name><value><int>-1000</int></value></member><member><name>faultString</name><value><string>Not Supported.</string></value></member></struct></value></fault></methodResponse>""",
     -1000, "Not Supported.")]
+  [TestCase("""<?xml version="1.0" encoding="UTF-8"?><methodResponse><fault><value><struct><member><value><int>-1000</int></value><name>faultCode</name></member><member><value><string>Not Supported.</string></value><name>faultString</name></member></struct></value></fault></methodResponse>""",
+    -1000, "Not Supported.")]
   public void DeserializeFaultResponseThrowsException(string xml, int faultCode, string message)
   {
-    XmlRpcSerializer serializer = new XmlRpcSerializer();
     byte[] data = Encoding.UTF8.GetBytes(xml);
 
     Assert.That(() =>
     {
-      serializer.Deserialize<XmlRpcResponseRaw>(data);
+      XmlRpcSerializer.Deserialize<string>(data);
     }, Throws.Exception.TypeOf<XmlRpcFaultException>().And.Message.EqualTo($"Received fault response: ({faultCode}) {message}"));
   }
 
@@ -256,17 +277,16 @@ public sealed class XmlRpcSerializerTests
   [TestCase("""xml version="1.0" encoding="UTF-8"?>""")]
   public void DeserializeInvalidXmlThrowsSerializationException(string xml)
   {
-    XmlRpcSerializer serializer = new XmlRpcSerializer();
     byte[] data = Encoding.UTF8.GetBytes(xml);
 
     Assert.That(() =>
     {
-      serializer.Deserialize<XmlRpcResponseRaw>(data);
-    }, Throws.Exception.TypeOf<SerializationException>());
+      XmlRpcSerializer.Deserialize<string>(data);
+    }, Throws.Exception.TypeOf<XmlRpcSerializationException>());
   }
 
   [Test]
-  [TestCase<XmlRpcResponseInt32>("""
+  [TestCase<int>("""
                                  <?xml version="1.0" encoding="UTF-8"?>
                                  <methodResponse>
                                  <params>
@@ -274,7 +294,7 @@ public sealed class XmlRpcSerializerTests
                                  </params>
                                  </methodResponse>
                                  """, true)]
-  [TestCase<XmlRpcResponseBoolean>("""
+  [TestCase<bool>("""
                                    <?xml version="1.0" encoding="UTF-8"?>
                                    <methodResponse>
                                    <params>
@@ -282,7 +302,7 @@ public sealed class XmlRpcSerializerTests
                                    </params>
                                    </methodResponse>
                                    """, -5)]
-  [TestCase<XmlRpcResponseDouble>("""
+  [TestCase<double>("""
                                   <?xml version="1.0" encoding="UTF-8"?>
                                   <methodResponse>
                                   <params>
@@ -290,7 +310,7 @@ public sealed class XmlRpcSerializerTests
                                   </params>
                                   </methodResponse>
                                   """, 1)]
-  [TestCase<XmlRpcResponseString>("""
+  [TestCase<string>("""
                                   <?xml version="1.0" encoding="UTF-8"?>
                                   <methodResponse>
                                   <params>
@@ -298,7 +318,7 @@ public sealed class XmlRpcSerializerTests
                                   </params>
                                   </methodResponse>
                                   """, -2.512345D)]
-  [TestCase<XmlRpcResponseInt32>("""
+  [TestCase<int>("""
                                  <?xml version="1.0" encoding="UTF-8"?>
                                  <methodResponse>
                                  <params>
@@ -306,7 +326,7 @@ public sealed class XmlRpcSerializerTests
                                  </params>
                                  </methodResponse>
                                  """, 0.5D)]
-  [TestCase<XmlRpcResponseStruct>("""
+  [TestCase<byte[]>("""
                                  <?xml version="1.0" encoding="UTF-8"?>
                                  <methodResponse>
                                  <params>
@@ -314,14 +334,13 @@ public sealed class XmlRpcSerializerTests
                                  </params>
                                  </methodResponse>
                                  """, "Return an array of all available XML-RPC methods on this server.")]
-  public void DeserializeWrongTypeThrowsSerializationException<T>(string xml, object value) where T : IXmlRpcResponseValue, new()
+  public void DeserializeWrongTypeThrowsSerializationException<T>(string xml, object value)
   {
-    XmlRpcSerializer serializer = new XmlRpcSerializer();
     byte[] data = Encoding.UTF8.GetBytes(xml);
 
     Assert.That(() =>
     {
-      serializer.Deserialize<T>(data);
-    }, Throws.Exception.TypeOf<SerializationException>());
+      XmlRpcSerializer.Deserialize<T>(data);
+    }, Throws.Exception.TypeOf<XmlRpcSerializationException>());
   }
 }
