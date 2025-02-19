@@ -107,6 +107,25 @@ public sealed class XmlRpcSerializerTests
             <?xml version="1.0" encoding="UTF-8"?>
             <methodResponse>
             <params>
+            <param><value><dateTime.iso8601>19980717T14:08:55</dateTime.iso8601></value></param>
+            </params>
+            </methodResponse>
+            """, 630362813350000000)] // 1998-07-17 14:08:55
+  public void DeserializeValidDateTimeResponseCreatesValidValue(string xml, long expectedTicks)
+  {
+    DateTime expectedDateTime = new DateTime(expectedTicks, DateTimeKind.Utc);
+
+    byte[] data = Encoding.UTF8.GetBytes(xml);
+    DateTime response = XmlRpcSerializer.Deserialize<DateTime>(data);
+
+    Assert.That(response, Is.EqualTo(expectedDateTime));
+  }
+
+  [Test]
+  [TestCase("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <methodResponse>
+            <params>
             <param><value><array><data>
             <value><string>system.listMethods</string></value>
             <value><string>system.methodSignature</string></value>
