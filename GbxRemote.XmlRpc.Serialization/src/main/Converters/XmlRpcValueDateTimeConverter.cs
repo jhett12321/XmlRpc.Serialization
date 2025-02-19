@@ -4,7 +4,7 @@ namespace GbxRemote.XmlRpc.Serialization.Converters
 {
   internal sealed class XmlRpcValueDateTimeConverter : XmlRpcValueConverter<DateTime>
   {
-    public static readonly XmlRpcValueDoubleConverter Instance = new XmlRpcValueDoubleConverter();
+    public static readonly XmlRpcValueDateTimeConverter Instance = new XmlRpcValueDateTimeConverter();
 
     public override DateTime Deserialize(XmlRpcReader reader)
     {

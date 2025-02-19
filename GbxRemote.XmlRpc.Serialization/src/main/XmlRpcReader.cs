@@ -164,7 +164,7 @@ public sealed class XmlRpcReader : IDisposable
 
   public DateTime GetDateTime()
   {
-    return DateTime.ParseExact(ReadSimpleValueNode("dateTime.iso8601"), "yyyymmddThh:mm:ss", CultureInfo.InvariantCulture);
+    return DateTime.ParseExact(ReadSimpleValueNode("dateTime.iso8601"), "yyyyMMddTHH:mm:ss", CultureInfo.InvariantCulture);
   }
 
   public byte[] GetBase64Bytes()

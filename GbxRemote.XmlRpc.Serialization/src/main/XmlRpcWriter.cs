@@ -129,7 +129,7 @@ namespace GbxRemote.XmlRpc.Serialization
 
     public void WriteDateTimeValue(DateTime value)
     {
-      WriteSimpleValueNode("dateTime.iso8601", value.ToString("yyyymmddThh:mm:ss", CultureInfo.InvariantCulture));
+      WriteSimpleValueNode("dateTime.iso8601", value.ToString("yyyyMMddTHH:mm:ss", CultureInfo.InvariantCulture));
     }
 
     public void WriteBase64BytesValue(byte[] value)
