@@ -5,7 +5,7 @@ namespace GbxRemote.XmlRpc.Tests.Tests;
 [XmlRpcStructSerializable(typeof(ServerStatusResponse))]
 public partial class ServerStatusResponseContext;
 
-public class ServerStatusResponse
+public sealed class ServerStatusResponse
 {
   [XmlRpcPropertyName("Code")]
   public int Code { get; set; }

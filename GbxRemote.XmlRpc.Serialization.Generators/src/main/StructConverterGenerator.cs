@@ -14,7 +14,8 @@ internal class StructConverterGenerator : IIncrementalGenerator
   private const string ClassAttributeTypeName = "GbxRemote.XmlRpc.Serialization.Attributes.XmlRpcStructSerializableAttribute";
   private const string ClassAttributeClassName = "XmlRpcStructSerializableAttribute";
 
-  private const string PropertyAttributeClassName = "XmlRpcPropertyNameAttribute";
+  private const string PropertyNameAttributeClassName = "XmlRpcPropertyNameAttribute";
+  private const string PropertyIgnoreAttributeClassName = "XmlRpcIgnore";
 
   public void Initialize(IncrementalGeneratorInitializationContext context)
   {
@@ -193,6 +194,11 @@ internal class StructConverterGenerator : IIncrementalGenerator
 
     foreach (PropertyInfo property in properties)
     {
+      if (property.Ignored)
+      {
+        continue;
+      }
+
       stringBuilder.AppendLine($"""
                                  {childIndent}    case "{property.SerializedType}":
                                  {childIndent}      value.{property.PropertyName} = XmlRpcConverterFactory.GetBuiltInValueConverter<{property.PropertyType}>().Deserialize(valueReader);
@@ -209,6 +215,11 @@ internal class StructConverterGenerator : IIncrementalGenerator
 
     foreach (PropertyInfo property in properties)
     {
+      if (property.Ignored)
+      {
+        continue;
+      }
+
       stringBuilder.AppendLine($"{childIndent}  XmlRpcConverterFactory.GetBuiltInValueConverter<{property.PropertyType}>().Serialize(writer, value.{property.PropertyName});");
     }
 
@@ -280,18 +291,30 @@ internal class StructConverterGenerator : IIncrementalGenerator
 
     public string SerializedType { get; set; }
 
+    public bool Ignored { get; set; }
+
     public PropertyInfo(IPropertySymbol property)
     {
       PropertyName = property.Name;
       SerializedType = property.Name;
       PropertyType = property.Type.ToString()!;
 
-      AttributeData? propertyNameAttribute = property.GetAttributes().FirstOrDefault(attribute => attribute.AttributeClass?.Name == PropertyAttributeClassName);
-      string? attributePropertyName = propertyNameAttribute?.ConstructorArguments[0].Value?.ToString();
-
-      if (attributePropertyName != null)
+      ImmutableArray<AttributeData> attributes = property.GetAttributes();
+      foreach (AttributeData attribute in attributes)
       {
-        SerializedType = attributePropertyName;
+        string? attributeType = attribute.AttributeClass?.Name;
+        if (attributeType == PropertyNameAttributeClassName)
+        {
+          string? attributePropertyName = attribute.ConstructorArguments[0].Value?.ToString();
+          if (attributePropertyName != null)
+          {
+            SerializedType = attributePropertyName;
+          }
+        }
+        else if (attributeType == PropertyIgnoreAttributeClassName)
+        {
+          Ignored = true;
+        }
       }
     }
   }
