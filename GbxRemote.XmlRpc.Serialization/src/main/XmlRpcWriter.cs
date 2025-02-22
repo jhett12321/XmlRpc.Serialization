@@ -37,10 +37,16 @@ namespace GbxRemote.XmlRpc.Serialization
         case XmlRpcTokenType.EndXmlDeclaration:
           xmlWriter.WriteEndDocument();
           break;
-        case XmlRpcTokenType.StartPayload:
+        case XmlRpcTokenType.StartMethodCall:
           xmlWriter.WriteStartElement("methodCall");
           break;
-        case XmlRpcTokenType.EndPayload:
+        case XmlRpcTokenType.EndMethodCall:
+          xmlWriter.WriteEndElement();
+          break;
+        case XmlRpcTokenType.StartMethodResponse:
+          xmlWriter.WriteStartElement("methodResponse");
+          break;
+        case XmlRpcTokenType.EndMethodResponse:
           xmlWriter.WriteEndElement();
           break;
         case XmlRpcTokenType.StartParams:

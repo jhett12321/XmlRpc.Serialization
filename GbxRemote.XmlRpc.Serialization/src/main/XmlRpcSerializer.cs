@@ -7,13 +7,13 @@ namespace GbxRemote.XmlRpc.Serialization;
 
 public static class XmlRpcSerializer
 {
-  public static byte[] Serialize(XmlRpcRequestMessage requestMessage)
+  public static byte[] SerializeRequest(XmlRpcRequestMessage requestMessage)
   {
     using MemoryStream requestStream = new MemoryStream();
     using (XmlRpcWriter writer = new XmlRpcWriter(requestStream))
     {
       writer.Write(XmlRpcTokenType.StartXmlDeclaration);
-      writer.Write(XmlRpcTokenType.StartPayload);
+      writer.Write(XmlRpcTokenType.StartMethodCall);
 
       writer.WriteElement("methodName", requestMessage.MethodName);
 
@@ -31,22 +31,22 @@ public static class XmlRpcSerializer
         writer.Write(XmlRpcTokenType.EndParams);
       }
 
-      writer.Write(XmlRpcTokenType.EndPayload);
+      writer.Write(XmlRpcTokenType.EndMethodCall);
       writer.Write(XmlRpcTokenType.EndXmlDeclaration);
     }
 
     return requestStream.ToArray();
   }
 
-  public static T Deserialize<T>(byte[] serializedXml, XmlRpcValueConverter<T>? converter = null)
+  public static T DeserializeResponse<T>(byte[] serializedXml, XmlRpcValueConverter<T>? converter = null)
   {
+    converter ??= XmlRpcConverterFactory.GetBuiltInValueConverter<T>();
+
     using MemoryStream stream = new MemoryStream(serializedXml);
     using XmlRpcReader reader = new XmlRpcReader(stream);
 
-    converter ??= XmlRpcConverterFactory.GetBuiltInValueConverter<T>();
-
     reader.Read(XmlRpcTokenType.StartXmlDeclaration);
-    reader.Read(XmlRpcTokenType.StartPayload);
+    reader.Read(XmlRpcTokenType.StartMethodResponse);
     XmlRpcTokenType payloadToken = reader.ReadNextToken();
 
     switch (payloadToken)
@@ -57,7 +57,7 @@ public static class XmlRpcSerializer
         T retVal = converter.Deserialize(reader);
         reader.Read(XmlRpcTokenType.EndParam);
         reader.Read(XmlRpcTokenType.EndParams);
-        reader.Read(XmlRpcTokenType.EndPayload);
+        reader.Read(XmlRpcTokenType.EndMethodResponse);
 
         return retVal;
       }
@@ -65,7 +65,7 @@ public static class XmlRpcSerializer
       {
         XmlRpcFaultResponse faultInfo = XmlRpcFaultResponseConverter.Instance.Deserialize(reader);
         reader.Read(XmlRpcTokenType.EndFault);
-        reader.Read(XmlRpcTokenType.EndPayload);
+        reader.Read(XmlRpcTokenType.EndMethodResponse);
 
         throw new XmlRpcFaultException(faultInfo, $"Received fault response: ({faultInfo.FaultCode}) {faultInfo.Message}");
       }

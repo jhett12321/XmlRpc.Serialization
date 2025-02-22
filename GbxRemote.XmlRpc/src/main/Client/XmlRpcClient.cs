@@ -60,7 +60,7 @@ public sealed class XmlRpcClient(string host, int port) : IDisposable
       throw new InvalidOperationException("The client is not connected.");
     }
 
-    byte[] requestData = XmlRpcSerializer.Serialize(requestMessage);
+    byte[] requestData = XmlRpcSerializer.SerializeRequest(requestMessage);
     XmlRpcRequest request = new XmlRpcRequest
     {
       RequestId = GetRequestId(),
@@ -156,7 +156,7 @@ public sealed class XmlRpcClient(string host, int port) : IDisposable
     byte[] buffer = new byte[info.Size];
     stream.ReadExactly(buffer);
 
-    return XmlRpcSerializer.Deserialize<T>(buffer);
+    return XmlRpcSerializer.DeserializeResponse<T>(buffer);
   }
 
   public void Dispose()
