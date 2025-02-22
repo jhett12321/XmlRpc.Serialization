@@ -4,15 +4,15 @@ namespace GbxRemote.XmlRpc.Serialization.Models;
 
 public sealed class XmlRpcRequestParameter<T> : IXmlRpcRequestParameter
 {
-  public T Value { get; }
-
   private readonly XmlRpcValueConverter<T> converter;
+
+  public T Value { get; }
 
   public XmlRpcRequestParameter(T value, XmlRpcValueConverter<T>? converter = null)
   {
     Value = value;
-    converter ??= XmlRpcConverterFactory.GetBuiltInValueConverter<T>();
 
+    converter ??= XmlRpcConverterFactory.GetBuiltInValueConverter<T>();
     this.converter = converter;
   }
 

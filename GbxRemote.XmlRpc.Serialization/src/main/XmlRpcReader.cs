@@ -199,6 +199,7 @@ public sealed class XmlRpcReader : IDisposable
       XmlNodeType.Element when xmlReader.Name == "member" => XmlRpcTokenType.StartMember,
       XmlNodeType.Element when xmlReader.Name == "name" => XmlRpcTokenType.StartName,
       XmlNodeType.Element when xmlReader.Name == "array" => XmlRpcTokenType.StartArray,
+      XmlNodeType.Element when xmlReader.Name == "data" => XmlRpcTokenType.StartData,
       XmlNodeType.EndElement when xmlReader.Name == "methodResponse" => XmlRpcTokenType.EndPayload,
       XmlNodeType.EndElement when xmlReader.Name == "params" => XmlRpcTokenType.EndParams,
       XmlNodeType.EndElement when xmlReader.Name == "params" => XmlRpcTokenType.EndParams,
@@ -209,6 +210,7 @@ public sealed class XmlRpcReader : IDisposable
       XmlNodeType.EndElement when xmlReader.Name == "member" => XmlRpcTokenType.EndMember,
       XmlNodeType.EndElement when xmlReader.Name == "name" => XmlRpcTokenType.EndName,
       XmlNodeType.EndElement when xmlReader.Name == "array" => XmlRpcTokenType.EndArray,
+      XmlNodeType.EndElement when xmlReader.Name == "data" => XmlRpcTokenType.EndData,
       _ => XmlRpcTokenType.Unknown,
     };
 
@@ -217,7 +219,11 @@ public sealed class XmlRpcReader : IDisposable
 
   private string ReadSimpleValueNode(params string[] expectedNodeNames)
   {
-    Read(XmlRpcTokenType.StartValue);
+    if (TokenType != XmlRpcTokenType.StartValue)
+    {
+      Read(XmlRpcTokenType.StartValue);
+    }
+
     Read();
     ValidateValueNode(XmlNodeType.Element, expectedNodeNames);
 

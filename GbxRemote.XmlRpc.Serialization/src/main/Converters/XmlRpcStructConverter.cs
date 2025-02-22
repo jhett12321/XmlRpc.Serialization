@@ -7,7 +7,11 @@ namespace GbxRemote.XmlRpc.Serialization.Converters
     public override T Deserialize(XmlRpcReader reader)
     {
       T retVal = new T();
-      reader.Read(XmlRpcTokenType.StartValue);
+      if (reader.TokenType != XmlRpcTokenType.StartValue)
+      {
+        reader.Read(XmlRpcTokenType.StartValue);
+      }
+
       reader.Read(XmlRpcTokenType.StartStruct);
 
       XmlRpcTokenType currentToken;

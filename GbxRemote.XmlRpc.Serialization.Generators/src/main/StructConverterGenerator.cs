@@ -14,26 +14,23 @@ internal class StructConverterGenerator : IIncrementalGenerator
   private const string ClassAttributeTypeName = "GbxRemote.XmlRpc.Serialization.Attributes.XmlRpcStructSerializableAttribute";
   private const string ClassAttributeClassName = "XmlRpcStructSerializableAttribute";
 
-  private const string PropertyNameAttributeClassName = "XmlRpcPropertyNameAttribute";
-  private const string PropertyIgnoreAttributeClassName = "XmlRpcIgnore";
-
   public void Initialize(IncrementalGeneratorInitializationContext context)
   {
-    IncrementalValuesProvider<ClassInfo?> classDeclarations = context.SyntaxProvider.ForAttributeWithMetadataName<ClassInfo?>(
+    IncrementalValuesProvider<XmlRpcContextInfo?> classDeclarations = context.SyntaxProvider.ForAttributeWithMetadataName<XmlRpcContextInfo?>(
         ClassAttributeTypeName,
         (node, _) => node is ClassDeclarationSyntax,
         (ctx, _) => GetSemanticTargetForGeneration(ctx))
       .Where(info => info is not null);
 
-    IncrementalValueProvider<(Compilation, ImmutableArray<ClassInfo?>)> compilation = context.CompilationProvider.Combine(classDeclarations.Collect());
+    IncrementalValueProvider<(Compilation, ImmutableArray<XmlRpcContextInfo?>)> compilation = context.CompilationProvider.Combine(classDeclarations.Collect());
     context.RegisterSourceOutput(compilation, (spc, source) => Execute(source.Item1, source.Item2!, spc));
   }
 
-  private void Execute(Compilation compilation, ImmutableArray<ClassInfo> classes, SourceProductionContext context)
+  private void Execute(Compilation compilation, ImmutableArray<XmlRpcContextInfo> classes, SourceProductionContext context)
   {
-    foreach (ClassInfo classInfo in classes)
+    foreach (XmlRpcContextInfo classInfo in classes)
     {
-      if (classInfo.SerializedType.TypeKind != TypeKind.Class)
+      if (classInfo.SerializedType.Type.TypeKind != TypeKind.Class)
       {
         context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor(
           "XR001",
@@ -45,11 +42,11 @@ internal class StructConverterGenerator : IIncrementalGenerator
         return;
       }
 
-      context.AddSource(GetFileName(classInfo), GenerateClass(classInfo));
+      context.AddSource(GetFileName(classInfo), GenerateContextClass(classInfo));
     }
   }
 
-  private ClassInfo? GetSemanticTargetForGeneration(GeneratorAttributeSyntaxContext context)
+  private XmlRpcContextInfo? GetSemanticTargetForGeneration(GeneratorAttributeSyntaxContext context)
   {
     if (context.TargetNode is not ClassDeclarationSyntax classDeclaration)
     {
@@ -77,10 +74,10 @@ internal class StructConverterGenerator : IIncrementalGenerator
 
     parentNodes.Reverse();
 
-    return new ClassInfo(classDeclaration, attribute, parentNodes);
+    return new XmlRpcContextInfo(classDeclaration, attribute, parentNodes);
   }
 
-  private string GetFileName(ClassInfo classInfo)
+  private string GetFileName(XmlRpcContextInfo classInfo)
   {
     StringBuilder stringBuilder = new StringBuilder();
     foreach (SyntaxNode node in classInfo.Parents)
@@ -105,18 +102,54 @@ internal class StructConverterGenerator : IIncrementalGenerator
     return stringBuilder.ToString();
   }
 
-  private string GenerateClass(ClassInfo classInfo)
+  private string GenerateContextClass(XmlRpcContextInfo classInfo)
   {
     StringBuilder stringBuilder = new StringBuilder();
 
-    GenerateClassHeader(stringBuilder, classInfo);
-    GenerateClassBody(stringBuilder, classInfo);
-    GenerateClassFooter(stringBuilder, classInfo);
+    Dictionary<INamedTypeSymbol, XmlRpcTypeInfo> serializedTypes = new Dictionary<INamedTypeSymbol, XmlRpcTypeInfo>();
+    serializedTypes.Add(classInfo.SerializedType.Type, classInfo.SerializedType);
+    CollectSerializedTypes(serializedTypes, classInfo.SerializedType);
+
+    string baseIndent = new string(' ', classInfo.Parents.Count * 2);
+    GenerateClassHeader(stringBuilder, baseIndent, classInfo);
+    GenerateConverters(stringBuilder, baseIndent, classInfo, serializedTypes.Values);
+    GenerateClassFooter(stringBuilder, baseIndent, classInfo);
 
     return stringBuilder.ToString();
   }
 
-  private void GenerateClassHeader(StringBuilder stringBuilder, ClassInfo classInfo)
+  private void CollectSerializedTypes(Dictionary<INamedTypeSymbol, XmlRpcTypeInfo> serializedTypes, XmlRpcTypeInfo typeInfo)
+  {
+    foreach (XmlRpcPropertyInfo property in typeInfo.Properties)
+    {
+      if (property.Ignored || property.Type is not INamedTypeSymbol type)
+      {
+        continue;
+      }
+
+      switch (property.XmlRpcPropertyType)
+      {
+        case XmlRpcPropertyType.UserArray:
+          type = type.TypeArguments.OfType<INamedTypeSymbol>().First();
+          break;
+        case XmlRpcPropertyType.UserStruct:
+          break;
+        default:
+          continue;
+      }
+
+      XmlRpcTypeInfo childTypeInfo = new XmlRpcTypeInfo(type);
+      if (serializedTypes.ContainsKey(childTypeInfo.Type))
+      {
+        continue;
+      }
+
+      serializedTypes.Add(childTypeInfo.Type, childTypeInfo);
+      CollectSerializedTypes(serializedTypes, childTypeInfo);
+    }
+  }
+
+  private void GenerateClassHeader(StringBuilder stringBuilder, string baseIndent, XmlRpcContextInfo classInfo)
   {
     stringBuilder.AppendLine("// <auto-generated/>");
     stringBuilder.AppendLine("using System;");
@@ -142,66 +175,92 @@ internal class StructConverterGenerator : IIncrementalGenerator
           throw new Exception($"Unexpected SyntaxNode {classInfo.GetType().FullName}");
       }
     }
+
+    WriteTypeDeclarationOpen(stringBuilder, baseIndent, classInfo.ClassDeclaration);
   }
 
-  private void GenerateClassBody(StringBuilder stringBuilder, ClassInfo classInfo)
+  private void GenerateConverters(StringBuilder stringBuilder, string baseIndent, XmlRpcContextInfo contextInfo, ICollection<XmlRpcTypeInfo> serializableTypes)
   {
-    string baseIndent = new string(' ', classInfo.Parents.Count * 2);
+    foreach (XmlRpcTypeInfo typeInfo in serializableTypes)
+    {
+      stringBuilder.AppendLine($"{baseIndent}  public static readonly XmlRpcValueConverter<{typeInfo.Type}> {typeInfo.Type.Name} = new {typeInfo.Type.Name}ValueConverter();");
+    }
 
-    WriteTypeDeclarationOpen(stringBuilder, baseIndent, classInfo.ClassDeclaration, $"XmlRpcStructConverter<{classInfo.SerializedType}>");
-
-    string childIndent = new string(' ', (classInfo.Parents.Count + 1) * 2);
-
-    stringBuilder.AppendLine($"{childIndent}public static readonly {classInfo.ClassDeclaration.Identifier.Text} Instance = new {classInfo.ClassDeclaration.Identifier.Text}();");
     stringBuilder.AppendLine();
 
-    List<PropertyInfo> properties = classInfo.SerializedType.GetMembers().OfType<IPropertySymbol>()
-      .Select(property => new PropertyInfo(property)).ToList();
+    foreach (XmlRpcTypeInfo typeInfo in serializableTypes)
+    {
+      stringBuilder.AppendLine($"{baseIndent}  public static readonly XmlRpcValueConverter<List<{typeInfo.Type}>> {typeInfo.Type.Name}List = new XmlRpcArrayConverter<{typeInfo.Type.Name}>({typeInfo.Type.Name});");
+    }
 
-    GenerateDeserializer(stringBuilder, childIndent, classInfo, properties);
     stringBuilder.AppendLine();
-    GenerateSerializer(stringBuilder, childIndent, classInfo, properties);
 
-    WriteTypeDeclarationClose(stringBuilder, baseIndent);
+    foreach (XmlRpcTypeInfo typeInfo in serializableTypes)
+    {
+      GenerateConverterBody(stringBuilder, baseIndent, contextInfo, typeInfo);
+      stringBuilder.AppendLine();
+    }
   }
 
-  private void GenerateDeserializer(StringBuilder stringBuilder, string childIndent, ClassInfo classInfo, List<PropertyInfo> properties)
+  private void GenerateConverterBody(StringBuilder stringBuilder, string baseIndent, XmlRpcContextInfo contextInfo, XmlRpcTypeInfo typeInfo)
+  {
+    stringBuilder.AppendLine($"{baseIndent}  public sealed class {typeInfo.Type.Name}ValueConverter : XmlRpcStructConverter<{typeInfo.Type}>");
+    stringBuilder.AppendLine($"{baseIndent}  {{");
+
+    string childIndent = baseIndent + "    ";
+
+    GenerateDeserializer(stringBuilder, childIndent, contextInfo, typeInfo, typeInfo.Properties);
+    stringBuilder.AppendLine();
+    GenerateSerializer(stringBuilder, childIndent, contextInfo, typeInfo, typeInfo.Properties);
+
+    WriteTypeDeclarationClose(stringBuilder, $"{baseIndent}  ");
+  }
+
+  private void GenerateDeserializer(StringBuilder stringBuilder, string childIndent, XmlRpcContextInfo contextInfo, XmlRpcTypeInfo typeInfo, List<XmlRpcPropertyInfo> properties)
   {
     stringBuilder.AppendLine($$"""
-                               {{childIndent}}protected override void PopulateStructMember({{classInfo.SerializedType}} value, string memberName, XmlRpcReader valueReader)
+                               {{childIndent}}protected override void PopulateStructMember({{typeInfo.Type}} value, string memberName, XmlRpcReader valueReader)
                                {{childIndent}}{
                                {{childIndent}}  switch (memberName)
                                {{childIndent}}  {
-                               {{GeneratePropertyAssignments(childIndent, properties)}}
+                               {{GeneratePropertyAssignments(childIndent, contextInfo, properties)}}
                                {{childIndent}}  }
                                {{childIndent}}}
                                """);
   }
 
-  private void GenerateSerializer(StringBuilder stringBuilder, string childIndent, ClassInfo classInfo, List<PropertyInfo> properties)
+  private void GenerateSerializer(StringBuilder stringBuilder, string childIndent, XmlRpcContextInfo contextInfo, XmlRpcTypeInfo typeInfo, List<XmlRpcPropertyInfo> properties)
   {
     stringBuilder.AppendLine($$"""
-                               {{childIndent}}protected override void WriteStructMembers(XmlRpcWriter writer, {{classInfo.SerializedType}} value)
+                               {{childIndent}}protected override void WriteStructMembers(XmlRpcWriter writer, {{typeInfo.Type}} value)
                                {{childIndent}}{
-                               {{GeneratePropertyWriters(childIndent, properties)}}
+                               {{GeneratePropertyWriters(childIndent, contextInfo, properties)}}
                                {{childIndent}}}
                                """);
   }
 
-  private string GeneratePropertyAssignments(string childIndent, List<PropertyInfo> properties)
+  private string GeneratePropertyAssignments(string childIndent, XmlRpcContextInfo contextInfo, List<XmlRpcPropertyInfo> properties)
   {
     StringBuilder stringBuilder = new StringBuilder();
 
-    foreach (PropertyInfo property in properties)
+    foreach (XmlRpcPropertyInfo property in properties)
     {
       if (property.Ignored)
       {
         continue;
       }
 
+      string converterCall = property.XmlRpcPropertyType switch
+      {
+        XmlRpcPropertyType.BuiltIn => $"XmlRpcConverterFactory.GetBuiltInValueConverter<{property.Type}>().Deserialize(valueReader);",
+        XmlRpcPropertyType.UserArray => $"{contextInfo.ClassDeclaration.Identifier.Text}.{((INamedTypeSymbol)property.Type).TypeArguments[0].Name}List.Deserialize(valueReader);",
+        XmlRpcPropertyType.UserStruct => $"{contextInfo.ClassDeclaration.Identifier.Text}.{property.Type.Name}.Deserialize(valueReader);",
+        _ => throw new NotImplementedException($"Unsupported property type {property.Type.Name}"),
+      };
+
       stringBuilder.AppendLine($"""
                                  {childIndent}    case "{property.SerializedType}":
-                                 {childIndent}      value.{property.PropertyName} = XmlRpcConverterFactory.GetBuiltInValueConverter<{property.PropertyType}>().Deserialize(valueReader);
+                                 {childIndent}      value.{property.PropertyName} = {converterCall}
                                  {childIndent}      break;
                                  """);
     }
@@ -209,25 +268,35 @@ internal class StructConverterGenerator : IIncrementalGenerator
     return stringBuilder.ToString();
   }
 
-  private string GeneratePropertyWriters(string childIndent, List<PropertyInfo> properties)
+  private string GeneratePropertyWriters(string childIndent, XmlRpcContextInfo contextInfo, List<XmlRpcPropertyInfo> properties)
   {
     StringBuilder stringBuilder = new StringBuilder();
 
-    foreach (PropertyInfo property in properties)
+    foreach (XmlRpcPropertyInfo property in properties)
     {
       if (property.Ignored)
       {
         continue;
       }
 
-      stringBuilder.AppendLine($"{childIndent}  XmlRpcConverterFactory.GetBuiltInValueConverter<{property.PropertyType}>().Serialize(writer, value.{property.PropertyName});");
+      string converterCall = property.XmlRpcPropertyType switch
+      {
+        XmlRpcPropertyType.BuiltIn => $"XmlRpcConverterFactory.GetBuiltInValueConverter<{property.Type}>().Serialize(writer, value.{property.PropertyName});",
+        XmlRpcPropertyType.UserArray => $"{contextInfo.ClassDeclaration.Identifier.Text}.{((INamedTypeSymbol)property.Type).TypeArguments[0].Name}List.Serialize(writer, value.{property.PropertyName});",
+        XmlRpcPropertyType.UserStruct => $"{contextInfo.ClassDeclaration.Identifier.Text}.{property.Type.Name}.Serialize(writer, value.{property.PropertyName});",
+        _ => throw new NotImplementedException($"Unsupported property type {property.Type.Name}"),
+      };
+
+      stringBuilder.AppendLine($"{childIndent}  {converterCall}");
     }
 
     return stringBuilder.ToString();
   }
 
-  private void GenerateClassFooter(StringBuilder stringBuilder, ClassInfo classInfo)
+  private void GenerateClassFooter(StringBuilder stringBuilder, string baseIndent, XmlRpcContextInfo classInfo)
   {
+    WriteTypeDeclarationClose(stringBuilder, baseIndent);
+
     for (int i = classInfo.Parents.Count - 1; i >= 0; i--)
     {
       SyntaxNode syntaxNode = classInfo.Parents[i];
@@ -264,58 +333,5 @@ internal class StructConverterGenerator : IIncrementalGenerator
   private void WriteTypeDeclarationClose(StringBuilder stringBuilder, string indent)
   {
     stringBuilder.AppendLine($"{indent}}}");
-  }
-
-  private sealed record ClassInfo
-  {
-    public ClassInfo(ClassDeclarationSyntax classDeclaration, AttributeData attributeData, List<SyntaxNode> parents)
-    {
-      ClassDeclaration = classDeclaration;
-      Parents = parents;
-      SerializedType = (INamedTypeSymbol)attributeData.ConstructorArguments[0].Value!;
-    }
-
-    public ClassDeclarationSyntax ClassDeclaration { get; }
-
-    public List<SyntaxNode> Parents { get; }
-
-    // public XmlRpcStructSerializableAttribute(Type type)
-    public INamedTypeSymbol SerializedType { get; }
-  }
-
-  private sealed record PropertyInfo
-  {
-    public string PropertyName { get; }
-
-    public string PropertyType { get; set; }
-
-    public string SerializedType { get; set; }
-
-    public bool Ignored { get; set; }
-
-    public PropertyInfo(IPropertySymbol property)
-    {
-      PropertyName = property.Name;
-      SerializedType = property.Name;
-      PropertyType = property.Type.ToString()!;
-
-      ImmutableArray<AttributeData> attributes = property.GetAttributes();
-      foreach (AttributeData attribute in attributes)
-      {
-        string? attributeType = attribute.AttributeClass?.Name;
-        if (attributeType == PropertyNameAttributeClassName)
-        {
-          string? attributePropertyName = attribute.ConstructorArguments[0].Value?.ToString();
-          if (attributePropertyName != null)
-          {
-            SerializedType = attributePropertyName;
-          }
-        }
-        else if (attributeType == PropertyIgnoreAttributeClassName)
-        {
-          Ignored = true;
-        }
-      }
-    }
   }
 }

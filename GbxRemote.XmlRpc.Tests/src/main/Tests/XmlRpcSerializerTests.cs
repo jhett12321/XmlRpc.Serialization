@@ -173,7 +173,7 @@ public sealed class XmlRpcSerializerTests
 
     byte[] data = Encoding.UTF8.GetBytes(xml);
 
-    ServerStatusResponse response = XmlRpcSerializer.Deserialize<ServerStatusResponse>(data, ServerStatusResponseContext.Instance);
+    ServerStatusResponse response = XmlRpcSerializer.Deserialize<ServerStatusResponse>(data, ServerStatusResponseContext.ServerStatusResponse);
 
     Assert.That(response.Code, Is.EqualTo(expected.Code));
     Assert.That(response.Name, Is.EqualTo(expected.Name));
@@ -248,7 +248,7 @@ public sealed class XmlRpcSerializerTests
 
     byte[] data = Encoding.UTF8.GetBytes(xml);
 
-    PlayerInfoResponse response = XmlRpcSerializer.Deserialize<PlayerInfoResponse>(data, PlayerInfoResponseContext.Instance);
+    PlayerInfoResponse response = XmlRpcSerializer.Deserialize<PlayerInfoResponse>(data, PlayerInfoResponseContext.PlayerInfoResponse);
 
     Assert.Multiple(() =>
     {
