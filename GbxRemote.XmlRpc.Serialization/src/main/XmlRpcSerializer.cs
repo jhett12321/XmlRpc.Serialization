@@ -38,6 +38,38 @@ public static class XmlRpcSerializer
     return requestStream.ToArray();
   }
 
+  public static byte[] SerializeResponse<T>(T response, XmlRpcValueConverter<T>? converter = null)
+  {
+    converter ??= XmlRpcConverterFactory.GetBuiltInValueConverter<T>();
+
+    using MemoryStream requestStream = new MemoryStream();
+    using (XmlRpcWriter writer = new XmlRpcWriter(requestStream))
+    {
+      writer.Write(XmlRpcTokenType.StartXmlDeclaration);
+      writer.Write(XmlRpcTokenType.StartMethodResponse);
+
+      if (response is XmlRpcFaultResponse faultResponse)
+      {
+        writer.Write(XmlRpcTokenType.StartFault);
+        XmlRpcFaultResponseConverter.Instance.Serialize(writer, faultResponse);
+        writer.Write(XmlRpcTokenType.EndFault);
+      }
+      else
+      {
+        writer.Write(XmlRpcTokenType.StartParams);
+        writer.Write(XmlRpcTokenType.StartParam);
+        converter.Serialize(writer, response);
+        writer.Write(XmlRpcTokenType.EndParam);
+        writer.Write(XmlRpcTokenType.EndParams);
+      }
+
+      writer.Write(XmlRpcTokenType.EndMethodResponse);
+      writer.Write(XmlRpcTokenType.EndXmlDeclaration);
+    }
+
+    return requestStream.ToArray();
+  }
+
   public static T DeserializeResponse<T>(byte[] serializedXml, XmlRpcValueConverter<T>? converter = null)
   {
     converter ??= XmlRpcConverterFactory.GetBuiltInValueConverter<T>();
