@@ -21,10 +21,33 @@ public sealed class XmlRpcSerializerTests
     XmlRpcRequestMessage requestMessage = new XmlRpcRequestMessage(methodName);
     foreach (string arg in args)
     {
-      requestMessage.Param<string>(arg);
+      requestMessage.Param(arg);
     }
 
-    byte[] serialized = XmlRpcSerializer.Serialize(requestMessage);
+    byte[] serialized = XmlRpcSerializer.SerializeRequest(requestMessage);
+    Assert.That(Encoding.UTF8.GetString(serialized), Is.EqualTo(expected));
+  }
+
+  [Test]
+  public void SerializeRequestStringCreatesValidXml()
+  {
+    const string expected = """<?xml version="1.0" encoding="utf-8"?><methodCall><methodName>TrackMania.PlayerInfoChanged</methodName><params><param><value><struct><member><name>Login</name><value><string>AAAAaAaAAa0AaAaAaaaaAA</string></value></member><member><name>NickName</name><value><string>Bla</string></value></member><member><name>PlayerId</name><value><i4>236</i4></value></member><member><name>TeamId</name><value><i4>-1</i4></value></member><member><name>SpectatorStatus</name><value><i4>0</i4></value></member><member><name>LadderRanking</name><value><i4>-1</i4></value></member><member><name>Flags</name><value><i4>101000000</i4></value></member><member><name>LadderScore</name><value><double>0.000001</double></value></member></struct></value></param></params></methodCall>""";
+    PlayerInfoChangedRequest request = new PlayerInfoChangedRequest
+    {
+      Login = "AAAAaAaAAa0AaAaAaaaaAA",
+      NickName = "Bla",
+      PlayerId = 236,
+      TeamId = -1,
+      SpectatorStatus = 0,
+      LadderRanking = -1,
+      Flags = 101000000,
+      LadderScore = 0.000001,
+    };
+
+    XmlRpcRequestMessage requestMessage = new XmlRpcRequestMessage("TrackMania.PlayerInfoChanged")
+      .Param(request, PlayerInfoChangedRequestContext.PlayerInfoChangedRequest);
+
+    byte[] serialized = XmlRpcSerializer.SerializeRequest(requestMessage);
     Assert.That(Encoding.UTF8.GetString(serialized), Is.EqualTo(expected));
   }
 
@@ -89,7 +112,7 @@ public sealed class XmlRpcSerializerTests
   {
     byte[] data = Encoding.UTF8.GetBytes(xml);
 
-    T response = XmlRpcSerializer.Deserialize<T>(data);
+    T response = XmlRpcSerializer.DeserializeResponse<T>(data);
     Assert.That(response, Is.EqualTo(value));
   }
 
@@ -105,7 +128,7 @@ public sealed class XmlRpcSerializerTests
   public void DeserializeValidBase64ResponseCreatesValidValue(string xml, string expected)
   {
     byte[] data = Encoding.UTF8.GetBytes(xml);
-    byte[] response = XmlRpcSerializer.Deserialize<byte[]>(data);
+    byte[] response = XmlRpcSerializer.DeserializeResponse<byte[]>(data);
     string base64Response = Convert.ToBase64String(response);
 
     Assert.That(base64Response, Is.EqualTo(expected));
@@ -125,7 +148,7 @@ public sealed class XmlRpcSerializerTests
     DateTime expectedDateTime = new DateTime(expectedTicks, DateTimeKind.Utc);
 
     byte[] data = Encoding.UTF8.GetBytes(xml);
-    DateTime response = XmlRpcSerializer.Deserialize<DateTime>(data);
+    DateTime response = XmlRpcSerializer.DeserializeResponse<DateTime>(data);
 
     Assert.That(response, Is.EqualTo(expectedDateTime));
   }
@@ -155,7 +178,7 @@ public sealed class XmlRpcSerializerTests
   {
     byte[] data = Encoding.UTF8.GetBytes(xml);
 
-    List<string> response = XmlRpcSerializer.Deserialize<List<string>>(data);
+    List<string> response = XmlRpcSerializer.DeserializeResponse<List<string>>(data);
     Assert.That(response, Is.EquivalentTo(values));
   }
 
@@ -182,7 +205,7 @@ public sealed class XmlRpcSerializerTests
 
     byte[] data = Encoding.UTF8.GetBytes(xml);
 
-    ServerStatusResponse response = XmlRpcSerializer.Deserialize<ServerStatusResponse>(data, ServerStatusResponseContext.ServerStatusResponse);
+    ServerStatusResponse response = XmlRpcSerializer.DeserializeResponse<ServerStatusResponse>(data, ServerStatusResponseContext.ServerStatusResponse);
 
     Assert.That(response.Code, Is.EqualTo(expected.Code));
     Assert.That(response.Name, Is.EqualTo(expected.Name));
@@ -257,7 +280,7 @@ public sealed class XmlRpcSerializerTests
 
     byte[] data = Encoding.UTF8.GetBytes(xml);
 
-    PlayerInfoResponse response = XmlRpcSerializer.Deserialize<PlayerInfoResponse>(data, PlayerInfoResponseContext.PlayerInfoResponse);
+    PlayerInfoResponse response = XmlRpcSerializer.DeserializeResponse<PlayerInfoResponse>(data, PlayerInfoResponseContext.PlayerInfoResponse);
 
     Assert.Multiple(() =>
     {
@@ -377,7 +400,7 @@ public sealed class XmlRpcSerializerTests
 
     byte[] data = Encoding.UTF8.GetBytes(xml);
 
-    PlayerInfoResponse response = XmlRpcSerializer.Deserialize<PlayerInfoResponse>(data, PlayerInfoResponseContext.PlayerInfoResponse);
+    PlayerInfoResponse response = XmlRpcSerializer.DeserializeResponse<PlayerInfoResponse>(data, PlayerInfoResponseContext.PlayerInfoResponse);
 
     Assert.Multiple(() =>
     {
@@ -420,7 +443,7 @@ public sealed class XmlRpcSerializerTests
 
     Assert.That(() =>
     {
-      XmlRpcSerializer.Deserialize<string>(data);
+      XmlRpcSerializer.DeserializeResponse<string>(data);
     }, Throws.Exception.TypeOf<XmlRpcFaultException>().And.Message.EqualTo($"Received fault response: ({faultCode}) {message}"));
   }
 
@@ -433,7 +456,7 @@ public sealed class XmlRpcSerializerTests
 
     Assert.That(() =>
     {
-      XmlRpcSerializer.Deserialize<string>(data);
+      XmlRpcSerializer.DeserializeResponse<string>(data);
     }, Throws.Exception.TypeOf<XmlRpcSerializationException>());
   }
 
@@ -492,7 +515,7 @@ public sealed class XmlRpcSerializerTests
 
     Assert.That(() =>
     {
-      XmlRpcSerializer.Deserialize<T>(data);
+      XmlRpcSerializer.DeserializeResponse<T>(data);
     }, Throws.Exception.TypeOf<XmlRpcSerializationException>());
   }
 }
