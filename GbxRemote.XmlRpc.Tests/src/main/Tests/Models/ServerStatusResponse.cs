@@ -1,6 +1,6 @@
 ﻿using GbxRemote.XmlRpc.Serialization.Attributes;
 
-namespace GbxRemote.XmlRpc.Tests.Tests;
+namespace GbxRemote.XmlRpc.Tests.Models;
 
 [XmlRpcStructSerializable(typeof(ServerStatusResponse))]
 public partial class ServerStatusResponseContext;

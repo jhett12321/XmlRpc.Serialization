@@ -3,9 +3,10 @@ using GbxRemote.XmlRpc.Serialization;
 using GbxRemote.XmlRpc.Serialization.Exceptions;
 using GbxRemote.XmlRpc.Serialization.Models;
 using GbxRemote.XmlRpc.Tests.Attributes;
+using GbxRemote.XmlRpc.Tests.Models;
 using NUnit.Framework;
 
-namespace GbxRemote.XmlRpc.Tests.Tests;
+namespace GbxRemote.XmlRpc.Tests;
 
 [TestFixture]
 public sealed class XmlRpcSerializerTests
