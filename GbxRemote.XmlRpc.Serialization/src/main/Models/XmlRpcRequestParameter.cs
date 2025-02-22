@@ -20,9 +20,4 @@ public sealed class XmlRpcRequestParameter<T> : IXmlRpcRequestParameter
   {
     converter.Serialize(writer, Value);
   }
-
-  public static implicit operator XmlRpcRequestParameter<T>(T parameter)
-  {
-    return new XmlRpcRequestParameter<T>(parameter);
-  }
 }
