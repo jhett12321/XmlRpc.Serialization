@@ -115,7 +115,7 @@ namespace GbxRemote.XmlRpc.Serialization
 
     public void WriteInt32Value(int value)
     {
-      WriteSimpleValueNode("int", value.ToString());
+      WriteSimpleValueNode("i4", value.ToString());
     }
 
     public void WriteBooleanValue(bool value)
