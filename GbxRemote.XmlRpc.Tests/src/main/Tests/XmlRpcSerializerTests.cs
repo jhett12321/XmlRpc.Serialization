@@ -30,53 +30,53 @@ public sealed class XmlRpcSerializerTests
 
   [Test]
   [TestCase<bool>("""
-                                   <?xml version="1.0" encoding="UTF-8"?>
-                                   <methodResponse>
-                                   <params>
-                                   <param><value><boolean>1</boolean></value></param>
-                                   </params>
-                                   </methodResponse>
-                                   """, true)]
+                  <?xml version="1.0" encoding="UTF-8"?>
+                  <methodResponse>
+                  <params>
+                  <param><value><boolean>1</boolean></value></param>
+                  </params>
+                  </methodResponse>
+                  """, true)]
   [TestCase<int>("""
-                                   <?xml version="1.0" encoding="UTF-8"?>
-                                   <methodResponse>
-                                   <params>
-                                   <param><value><i4>-5</i4></value></param>
-                                   </params>
-                                   </methodResponse>
-                                   """, -5)]
+                 <?xml version="1.0" encoding="UTF-8"?>
+                 <methodResponse>
+                 <params>
+                 <param><value><i4>-5</i4></value></param>
+                 </params>
+                 </methodResponse>
+                 """, -5)]
   [TestCase<int>("""
-                                 <?xml version="1.0" encoding="UTF-8"?>
-                                 <methodResponse>
-                                 <params>
-                                 <param><value><int>1</int></value></param>
-                                 </params>
-                                 </methodResponse>
-                                 """, 1)]
+                 <?xml version="1.0" encoding="UTF-8"?>
+                 <methodResponse>
+                 <params>
+                 <param><value><int>1</int></value></param>
+                 </params>
+                 </methodResponse>
+                 """, 1)]
   [TestCase<double>("""
-                                 <?xml version="1.0" encoding="UTF-8"?>
-                                 <methodResponse>
-                                 <params>
-                                 <param><value><double>-2.512345</double></value></param>
-                                 </params>
-                                 </methodResponse>
-                                 """, -2.512345D)]
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <methodResponse>
+                    <params>
+                    <param><value><double>-2.512345</double></value></param>
+                    </params>
+                    </methodResponse>
+                    """, -2.512345D)]
   [TestCase<double>("""
-                                 <?xml version="1.0" encoding="UTF-8"?>
-                                 <methodResponse>
-                                 <params>
-                                 <param><value><double>0.500000</double></value></param>
-                                 </params>
-                                 </methodResponse>
-                                 """, 0.5D)]
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <methodResponse>
+                    <params>
+                    <param><value><double>0.500000</double></value></param>
+                    </params>
+                    </methodResponse>
+                    """, 0.5D)]
   [TestCase<string>("""
-                                 <?xml version="1.0" encoding="UTF-8"?>
-                                 <methodResponse>
-                                 <params>
-                                 <param><value><string>Return an array of all available XML-RPC methods on this server.</string></value></param>
-                                 </params>
-                                 </methodResponse>
-                                 """, "Return an array of all available XML-RPC methods on this server.")]
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <methodResponse>
+                    <params>
+                    <param><value><string>Return an array of all available XML-RPC methods on this server.</string></value></param>
+                    </params>
+                    </methodResponse>
+                    """, "Return an array of all available XML-RPC methods on this server.")]
   public void DeserializeValidResponseCreatesValidValue<T>(string xml, object value)
   {
     byte[] data = Encoding.UTF8.GetBytes(xml);
@@ -87,13 +87,13 @@ public sealed class XmlRpcSerializerTests
 
   [Test]
   [TestCase("""
-                    <?xml version="1.0" encoding="UTF-8"?>
-                    <methodResponse>
-                    <params>
-                    <param><value><base64>eW91IGNhbid0IHJlYWQgdGhpcyE=</base64></value></param>
-                    </params>
-                    </methodResponse>
-                    """, "eW91IGNhbid0IHJlYWQgdGhpcyE=")]
+            <?xml version="1.0" encoding="UTF-8"?>
+            <methodResponse>
+            <params>
+            <param><value><base64>eW91IGNhbid0IHJlYWQgdGhpcyE=</base64></value></param>
+            </params>
+            </methodResponse>
+            """, "eW91IGNhbid0IHJlYWQgdGhpcyE=")]
   public void DeserializeValidBase64ResponseCreatesValidValue(string xml, string expected)
   {
     byte[] data = Encoding.UTF8.GetBytes(xml);
@@ -431,53 +431,53 @@ public sealed class XmlRpcSerializerTests
 
   [Test]
   [TestCase<int>("""
-                                 <?xml version="1.0" encoding="UTF-8"?>
-                                 <methodResponse>
-                                 <params>
-                                 <param><value><boolean>1</boolean></value></param>
-                                 </params>
-                                 </methodResponse>
-                                 """, true)]
+                 <?xml version="1.0" encoding="UTF-8"?>
+                 <methodResponse>
+                 <params>
+                 <param><value><boolean>1</boolean></value></param>
+                 </params>
+                 </methodResponse>
+                 """, true)]
   [TestCase<bool>("""
-                                   <?xml version="1.0" encoding="UTF-8"?>
-                                   <methodResponse>
-                                   <params>
-                                   <param><value><i4>-5</i4></value></param>
-                                   </params>
-                                   </methodResponse>
-                                   """, -5)]
+                  <?xml version="1.0" encoding="UTF-8"?>
+                  <methodResponse>
+                  <params>
+                  <param><value><i4>-5</i4></value></param>
+                  </params>
+                  </methodResponse>
+                  """, -5)]
   [TestCase<double>("""
-                                  <?xml version="1.0" encoding="UTF-8"?>
-                                  <methodResponse>
-                                  <params>
-                                  <param><value><int>1</int></value></param>
-                                  </params>
-                                  </methodResponse>
-                                  """, 1)]
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <methodResponse>
+                    <params>
+                    <param><value><int>1</int></value></param>
+                    </params>
+                    </methodResponse>
+                    """, 1)]
   [TestCase<string>("""
-                                  <?xml version="1.0" encoding="UTF-8"?>
-                                  <methodResponse>
-                                  <params>
-                                  <param><value><double>-2.512345</double></value></param>
-                                  </params>
-                                  </methodResponse>
-                                  """, -2.512345D)]
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <methodResponse>
+                    <params>
+                    <param><value><double>-2.512345</double></value></param>
+                    </params>
+                    </methodResponse>
+                    """, -2.512345D)]
   [TestCase<int>("""
-                                 <?xml version="1.0" encoding="UTF-8"?>
-                                 <methodResponse>
-                                 <params>
-                                 <param><value><double>0.500000</double></value></param>
-                                 </params>
-                                 </methodResponse>
-                                 """, 0.5D)]
+                 <?xml version="1.0" encoding="UTF-8"?>
+                 <methodResponse>
+                 <params>
+                 <param><value><double>0.500000</double></value></param>
+                 </params>
+                 </methodResponse>
+                 """, 0.5D)]
   [TestCase<byte[]>("""
-                                 <?xml version="1.0" encoding="UTF-8"?>
-                                 <methodResponse>
-                                 <params>
-                                 <param><value><string>Return an array of all available XML-RPC methods on this server.</string></value></param>
-                                 </params>
-                                 </methodResponse>
-                                 """, "Return an array of all available XML-RPC methods on this server.")]
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <methodResponse>
+                    <params>
+                    <param><value><string>Return an array of all available XML-RPC methods on this server.</string></value></param>
+                    </params>
+                    </methodResponse>
+                    """, "Return an array of all available XML-RPC methods on this server.")]
   public void DeserializeWrongTypeThrowsSerializationException<T>(string xml, object value)
   {
     byte[] data = Encoding.UTF8.GetBytes(xml);
