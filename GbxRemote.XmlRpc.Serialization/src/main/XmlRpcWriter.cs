@@ -11,7 +11,7 @@ namespace GbxRemote.XmlRpc.Serialization
   {
     private static readonly XmlWriterSettings WriterSettings = new XmlWriterSettings
     {
-      Encoding = new UTF8Encoding(false),
+      Encoding = new XmlRpcUtf8Encoding(),
       ConformanceLevel = ConformanceLevel.Auto,
     };
 

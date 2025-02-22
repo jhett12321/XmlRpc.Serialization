@@ -2,10 +2,10 @@
 
 namespace GbxRemote.XmlRpc.Tests.Models;
 
-[XmlRpcStructSerializable(typeof(PlayerInfoChangedRequest))]
-internal partial class PlayerInfoChangedRequestContext;
+[XmlRpcStructSerializable(typeof(OnPlayerInfoChangeRequest))]
+internal partial class OnPlayerInfoChangeRequestContext;
 
-public sealed class PlayerInfoChangedRequest
+public sealed class OnPlayerInfoChangeRequest
 {
   [XmlRpcPropertyName("Login")]
   public string Login { get; set; }
