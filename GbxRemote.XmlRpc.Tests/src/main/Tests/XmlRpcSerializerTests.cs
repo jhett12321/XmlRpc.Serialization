@@ -77,6 +77,14 @@ public sealed class XmlRpcSerializerTests
                     </params>
                     </methodResponse>
                     """, "Return an array of all available XML-RPC methods on this server.")]
+  [TestCase<string>("""
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <methodResponse>
+                    <params>
+                    <param><value>Return an array of all available XML-RPC methods on this server.</value></param>
+                    </params>
+                    </methodResponse>
+                    """, "Return an array of all available XML-RPC methods on this server.")]
   public void DeserializeValidResponseCreatesValidValue<T>(string xml, object value)
   {
     byte[] data = Encoding.UTF8.GetBytes(xml);

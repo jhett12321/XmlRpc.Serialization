@@ -154,7 +154,28 @@ public sealed class XmlRpcReader : IDisposable
 
   public string GetString()
   {
-    return ReadSimpleValueNode("string");
+    if (TokenType != XmlRpcTokenType.StartValue)
+    {
+      Read(XmlRpcTokenType.StartValue);
+    }
+
+    Read();
+
+    string value;
+    if (xmlReader.NodeType == XmlNodeType.Text)
+    {
+      value = xmlReader.ReadContentAsString();
+    }
+    else
+    {
+      ValidateValueNode(XmlNodeType.Element, "string");
+      value = ReadElementContentAsString();
+    }
+
+    tokenTypeDirty = true;
+    ValidateValueNode(XmlNodeType.EndElement, "value");
+
+    return value;
   }
 
   public double GetDouble()
