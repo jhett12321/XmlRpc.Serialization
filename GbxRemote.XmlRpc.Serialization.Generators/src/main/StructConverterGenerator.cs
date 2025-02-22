@@ -287,7 +287,10 @@ internal class StructConverterGenerator : IIncrementalGenerator
         _ => throw new NotImplementedException($"Unsupported property type {property.Type.Name}"),
       };
 
+      stringBuilder.AppendLine($"{childIndent}  writer.Write(XmlRpcTokenType.StartMember);");
+      stringBuilder.AppendLine($"{childIndent}  writer.WriteElement(\"name\", \"{property.SerializedType}\");");
       stringBuilder.AppendLine($"{childIndent}  {converterCall}");
+      stringBuilder.AppendLine($"{childIndent}  writer.Write(XmlRpcTokenType.EndMember);");
     }
 
     return stringBuilder.ToString();
