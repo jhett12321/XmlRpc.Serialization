@@ -277,6 +277,130 @@ public sealed class XmlRpcSerializerTests
   }
 
   [Test]
+  public void DeserializeMultipleNestedStructResponseCreatesValidValue()
+  {
+    const string xml = """
+                       <?xml version="1.0" encoding="UTF-8"?>
+                       <methodResponse>
+                       <params>
+                       <param><value><struct>
+                       <member><name>Uptime</name>
+                       <value><i4>10279</i4></value></member>
+                       <member><name>NbrConnection</name>
+                       <value><i4>1</i4></value></member>
+                       <member><name>MeanConnectionTime</name>
+                       <value><i4>78</i4></value></member>
+                       <member><name>MeanNbrPlayer</name>
+                       <value><i4>0</i4></value></member>
+                       <member><name>RecvNetRate</name>
+                       <value><i4>202</i4></value></member>
+                       <member><name>SendNetRate</name>
+                       <value><i4>65</i4></value></member>
+                       <member><name>TotalReceivingSize</name>
+                       <value><i4>18852</i4></value></member>
+                       <member><name>TotalSendingSize</name>
+                       <value><i4>5169</i4></value></member>
+                       <member><name>PlayerNetInfos</name>
+                       <value><array><data>
+                       <value><struct>
+                       <member><name>Login</name>
+                       <value><string>AAAAaAaAAa0AaAaAaaaaAA</string></value></member>
+                       <member><name>IPAddress</name>
+                       <value><string>127.0.0.1</string></value></member>
+                       <member><name>StateUpdateLatency</name>
+                       <value><i4>0</i4></value></member>
+                       <member><name>StateUpdatePeriod</name>
+                       <value><i4>0</i4></value></member>
+                       <member><name>LatestNetworkActivity</name>
+                       <value><i4>0</i4></value></member>
+                       <member><name>PacketLossRate</name>
+                       <value><double>0.001276</double></value></member>
+                       </struct></value>
+                       <value><struct>
+                       <member><name>Login</name>
+                       <value><string>BBBBbBbBBb0BbBbBbbbbBB</string></value></member>
+                       <member><name>IPAddress</name>
+                       <value><string>192.168.1.1</string></value></member>
+                       <member><name>StateUpdateLatency</name>
+                       <value><i4>0</i4></value></member>
+                       <member><name>StateUpdatePeriod</name>
+                       <value><i4>0</i4></value></member>
+                       <member><name>LatestNetworkActivity</name>
+                       <value><i4>0</i4></value></member>
+                       <member><name>PacketLossRate</name>
+                       <value><double>0.001576</double></value></member>
+                       </struct></value>
+                       </data></array></value></member>
+                       </struct></value></param>
+                       </params>
+                       </methodResponse>
+                       """;
+
+    PlayerInfoResponse expected = new PlayerInfoResponse();
+    expected.Uptime = 10279;
+    expected.NbrConnection = 1;
+    expected.MeanConnectionTime = 78;
+    expected.MeanNbrPlayer = 0;
+    expected.RecvNetRate = 202;
+    expected.SendNetRate = 65;
+    expected.TotalReceivingSize = 18852;
+    expected.TotalSendingSize = 5169;
+    expected.PlayerNetInfos = new List<PlayerNetInfo>();
+
+    PlayerNetInfo expectedNetInfo1 = new PlayerNetInfo();
+    expectedNetInfo1.Login = "AAAAaAaAAa0AaAaAaaaaAA";
+    expectedNetInfo1.IPAddress = "127.0.0.1";
+    expectedNetInfo1.StateUpdateLatency = 0;
+    expectedNetInfo1.StateUpdatePeriod = 0;
+    expectedNetInfo1.LatestNetworkActivity = 0;
+    expectedNetInfo1.PacketLossRate = 0.001276D;
+
+    PlayerNetInfo expectedNetInfo2 = new PlayerNetInfo();
+    expectedNetInfo2.Login = "BBBBbBbBBb0BbBbBbbbbBB";
+    expectedNetInfo2.IPAddress = "192.168.1.1";
+    expectedNetInfo2.StateUpdateLatency = 0;
+    expectedNetInfo2.StateUpdatePeriod = 0;
+    expectedNetInfo2.LatestNetworkActivity = 0;
+    expectedNetInfo2.PacketLossRate = 0.001576D;
+
+    expected.PlayerNetInfos.Add(expectedNetInfo1);
+    expected.PlayerNetInfos.Add(expectedNetInfo2);
+
+    byte[] data = Encoding.UTF8.GetBytes(xml);
+
+    PlayerInfoResponse response = XmlRpcSerializer.Deserialize<PlayerInfoResponse>(data, PlayerInfoResponseContext.PlayerInfoResponse);
+
+    Assert.Multiple(() =>
+    {
+      Assert.That(response.Uptime, Is.EqualTo(expected.Uptime));
+      Assert.That(response.NbrConnection, Is.EqualTo(expected.NbrConnection));
+      Assert.That(response.MeanConnectionTime, Is.EqualTo(expected.MeanConnectionTime));
+      Assert.That(response.MeanNbrPlayer, Is.EqualTo(expected.MeanNbrPlayer));
+      Assert.That(response.RecvNetRate, Is.EqualTo(expected.RecvNetRate));
+      Assert.That(response.SendNetRate, Is.EqualTo(expected.SendNetRate));
+      Assert.That(response.TotalReceivingSize, Is.EqualTo(expected.TotalReceivingSize));
+      Assert.That(response.TotalSendingSize, Is.EqualTo(expected.TotalSendingSize));
+      Assert.That(response.PlayerNetInfos.Count, Is.EqualTo(expected.PlayerNetInfos.Count));
+    });
+
+    AssertNetInfo(response.PlayerNetInfos[0], expectedNetInfo1);
+    AssertNetInfo(response.PlayerNetInfos[1], expectedNetInfo2);
+
+    void AssertNetInfo(PlayerNetInfo actual, PlayerNetInfo expected)
+    {
+      Assert.Multiple(() =>
+      {
+        Assert.That(actual.Login, Is.EqualTo(expected.Login));
+        Assert.That(actual.IPAddress, Is.EqualTo(expected.IPAddress));
+        Assert.That(actual.StateUpdateLatency, Is.EqualTo(expected.StateUpdateLatency));
+        Assert.That(actual.StateUpdatePeriod, Is.EqualTo(expected.StateUpdatePeriod));
+        Assert.That(actual.LatestNetworkActivity, Is.EqualTo(expected.LatestNetworkActivity));
+        Assert.That(actual.PacketLossRate, Is.EqualTo(expected.PacketLossRate));
+      });
+    }
+  }
+
+  [Test]
   [TestCase("""<?xml version="1.0" encoding="UTF-8"?><methodResponse><fault><value><struct><member><name>faultCode</name><value><int>-1000</int></value></member><member><name>faultString</name><value><string>Not Supported.</string></value></member></struct></value></fault></methodResponse>""",
     -1000, "Not Supported.")]
   [TestCase("""<?xml version="1.0" encoding="UTF-8"?><methodResponse><fault><value><struct><member><value><int>-1000</int></value><name>faultCode</name></member><member><value><string>Not Supported.</string></value><name>faultString</name></member></struct></value></fault></methodResponse>""",
