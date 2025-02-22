@@ -124,7 +124,7 @@ namespace GbxRemote.XmlRpc.Serialization
 
     public void WriteDoubleValue(double value)
     {
-      WriteSimpleValueNode("double", value.ToString(CultureInfo.InvariantCulture));
+      WriteSimpleValueNode("double", value.ToString("0." + new string('#', 339)).TrimEnd('0'));
     }
 
     public void WriteDateTimeValue(DateTime value)
