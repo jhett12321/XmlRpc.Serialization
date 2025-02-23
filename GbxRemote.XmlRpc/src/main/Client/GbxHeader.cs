@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace GbxRemote.XmlRpc.Client;
 
-public sealed class GbxHeader(string header)
+internal sealed class GbxHeader(string header)
 {
   private readonly byte[] headerBytes = Encoding.UTF8.GetBytes(header);
 
