@@ -6,7 +6,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\GbxRemote.XmlRpc.Serialization\GbxRemote.XmlRpc.Serialization.csproj" />
+        <ProjectReference Include="..\GbxRemote.XmlRpc.Serialization\GbxRemote.XmlRpc.Serialization.csproj"/>
     </ItemGroup>
 
 </Project>
