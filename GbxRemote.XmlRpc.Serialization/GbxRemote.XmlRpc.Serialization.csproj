@@ -1,12 +1,47 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+    <!--Build-->
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
         <Nullable>enable</Nullable>
+
+        <RootNamespace>GbxRemote.XmlRpc.Serialization</RootNamespace>
+    </PropertyGroup>
+
+    <!--Package-->
+    <PropertyGroup>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+
+        <PackageId>$(AssemblyName)</PackageId>
+        <Authors>TMLeagues</Authors>
+
+        <RepositoryUrl>https://github.com/LeaguesTM/GbxRemote.XmlRpc</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+
+        <PackageTags>Trackmania;XML-RPC;XmlRpc;GbxRemote;Serialization</PackageTags>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\GbxRemote.XmlRpc.Serialization.Generators\GbxRemote.XmlRpc.Serialization.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
+        <None Remove="../GbxRemote.XmlRpc.Serialization.Generators/bin/$(Configuration)/$(AssemblyName).Generators.dll" />
+        <None Include="../GbxRemote.XmlRpc.Serialization.Generators/bin/$(Configuration)/$(AssemblyName).Generators.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../GbxRemote.XmlRpc.Serialization.Generators/GbxRemote.XmlRpc.Serialization.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
+    </ItemGroup>
+
+    <!--Debug/Source Link-->
+    <PropertyGroup>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <IncludeSymbols>true</IncludeSymbols>
+        <DebugSymbols>true</DebugSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All"/>
     </ItemGroup>
 
 </Project>
