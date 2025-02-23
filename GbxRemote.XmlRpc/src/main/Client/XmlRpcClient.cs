@@ -77,12 +77,19 @@ public sealed class XmlRpcClient(string host, int port) : IDisposable
       throw new Exception($"Failed to add request '{request.RequestId}'");
     }
 
-    await SendRequest(request.RequestId, requestData);
+    await SendAsync(request.RequestId, requestData);
 
     return await request.Task.Task;
   }
 
-  // TODO: Add id overflow test
+  public async Task PostResponseAsync<T>(T response, uint responseId, XmlRpcValueConverter<T>? responseConverter = null)
+  {
+    responseConverter ??= XmlRpcConverterFactory.GetBuiltInValueConverter<T>();
+    byte[] responseData = XmlRpcSerializer.SerializeResponse(response, responseConverter);
+
+    await SendAsync(responseId, responseData);
+  }
+
   private uint GetRequestId()
   {
     uint id = Interlocked.Increment(ref currentRequestId);
@@ -97,7 +104,7 @@ public sealed class XmlRpcClient(string host, int port) : IDisposable
     return Interlocked.Increment(ref currentRequestId);
   }
 
-  private async Task SendRequest(uint requestId, byte[] requestData)
+  private async Task SendAsync(uint requestId, byte[] requestData)
   {
     NetworkStream netStream = tcpClient.GetStream();
     SendRequestInfo(netStream, requestId, requestData);
