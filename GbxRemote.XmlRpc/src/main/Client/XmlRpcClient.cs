@@ -7,6 +7,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using GbxRemote.XmlRpc.Serialization;
+using GbxRemote.XmlRpc.Serialization.Converters;
 using GbxRemote.XmlRpc.Serialization.Models;
 
 namespace GbxRemote.XmlRpc.Client;
@@ -20,6 +21,7 @@ public sealed class XmlRpcClient(string host, int port) : IDisposable
 
   public string Host { get; } = host;
   public int Port { get; } = port;
+  public event Action<XmlRpcResponseInfo, byte[]>? OnUnhandledResponse;
 
   private readonly TcpClient tcpClient = new TcpClient();
   private readonly ConcurrentDictionary<uint, XmlRpcRequest> activeRequests = new ConcurrentDictionary<uint, XmlRpcRequest>();
@@ -53,31 +55,31 @@ public sealed class XmlRpcClient(string host, int port) : IDisposable
     receiveLoop.Start();
   }
 
-  public async Task<T> PostAsync<T>(XmlRpcRequestMessage requestMessage)
+  public async Task<T> PostRequestAsync<T>(XmlRpcRequestMessage requestMessage, XmlRpcValueConverter<T>? responseConverter = null)
   {
     if (!tcpClient.Connected)
     {
       throw new InvalidOperationException("The client is not connected.");
     }
 
+    responseConverter ??= XmlRpcConverterFactory.GetBuiltInValueConverter<T>();
     byte[] requestData = XmlRpcSerializer.SerializeRequest(requestMessage);
-    XmlRpcRequest request = new XmlRpcRequest
+
+    XmlRpcRequest<T> request = new XmlRpcRequest<T>
     {
       RequestId = GetRequestId(),
-      Tcs = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously),
-      ReceiveResponse = (stream, info) => ReceiveResponse<T>(stream, info)!,
+      Task = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously),
     };
+    request.ReceiveResponse = responseData => ReceiveResponse(request, responseData, responseConverter);
 
     if (!activeRequests.TryAdd(request.RequestId, request))
     {
       throw new Exception($"Failed to add request '{request.RequestId}'");
     }
 
-    NetworkStream netStream = tcpClient.GetStream();
-    SendRequestInfo(netStream, request, requestData);
-    await SendRequest(netStream, requestData);
+    await SendRequest(request.RequestId, requestData);
 
-    return (T)await request.Tcs.Task;
+    return await request.Task.Task;
   }
 
   // TODO: Add id overflow test
@@ -95,18 +97,21 @@ public sealed class XmlRpcClient(string host, int port) : IDisposable
     return Interlocked.Increment(ref currentRequestId);
   }
 
-  private void SendRequestInfo(Stream stream, XmlRpcRequest request, byte[] requestData)
+  private async Task SendRequest(uint requestId, byte[] requestData)
+  {
+    NetworkStream netStream = tcpClient.GetStream();
+    SendRequestInfo(netStream, requestId, requestData);
+
+    await netStream.WriteAsync(requestData);
+  }
+
+  private void SendRequestInfo(Stream stream, uint requestId, byte[] requestData)
   {
     Span<byte> buffer = stackalloc byte[sizeof(int) + sizeof(uint)];
     BinaryPrimitives.WriteInt32LittleEndian(buffer, requestData.Length);
-    BinaryPrimitives.WriteUInt32LittleEndian(buffer[sizeof(int)..], request.RequestId);
+    BinaryPrimitives.WriteUInt32LittleEndian(buffer[sizeof(int)..], requestId);
 
     stream.Write(buffer);
-  }
-
-  private async Task SendRequest(Stream stream, byte[] requestData)
-  {
-    await stream.WriteAsync(requestData);
   }
 
   private void ReceiveLoop()
@@ -115,20 +120,17 @@ public sealed class XmlRpcClient(string host, int port) : IDisposable
     while (tcpClient.Connected && receiveLoopCancel != null && !receiveLoopCancel.IsCancellationRequested)
     {
       XmlRpcResponseInfo info = ReceiveResponseInfo(netStream);
+      byte[] responseData = new byte[info.Size];
+      netStream.ReadExactly(responseData);
+
       if (activeRequests.Remove(info.ResponseId, out XmlRpcRequest? pendingRequest))
       {
-        try
-        {
-          object response = pendingRequest.ReceiveResponse(netStream, info);
-          pendingRequest.Tcs.SetResult(response);
-        }
-        catch (Exception e)
-        {
-          pendingRequest.Tcs.SetException(e);
-        }
+        pendingRequest.ReceiveResponse(responseData);
       }
-
-      // TODO: Callbacks
+      else
+      {
+        OnUnhandledResponse?.Invoke(info, responseData);
+      }
     }
 
     receiveLoop = null;
@@ -151,12 +153,17 @@ public sealed class XmlRpcClient(string host, int port) : IDisposable
     return info;
   }
 
-  private T ReceiveResponse<T>(Stream stream, XmlRpcResponseInfo info)
+  private void ReceiveResponse<T>(XmlRpcRequest<T> request, byte[] serializedXml, XmlRpcValueConverter<T> responseConverter)
   {
-    byte[] buffer = new byte[info.Size];
-    stream.ReadExactly(buffer);
-
-    return XmlRpcSerializer.DeserializeResponse<T>(buffer);
+    try
+    {
+      T value = XmlRpcSerializer.DeserializeResponse(serializedXml, responseConverter);
+      request.Task.SetResult(value);
+    }
+    catch (Exception e)
+    {
+      request.Task.SetException(e);
+    }
   }
 
   public void Dispose()
@@ -170,16 +177,14 @@ public sealed class XmlRpcClient(string host, int port) : IDisposable
     receiveLoopCancel = null;
   }
 
-  private sealed class XmlRpcRequest
+  private class XmlRpcRequest
   {
     public required uint RequestId { get; init; }
-    public required TaskCompletionSource<object> Tcs { get; init; }
-    public required Func<Stream, XmlRpcResponseInfo, object> ReceiveResponse { get; init; }
+    public Action<byte[]> ReceiveResponse { get; set; } = null!;
   }
 
-  private struct XmlRpcResponseInfo
+  private sealed class XmlRpcRequest<T> : XmlRpcRequest
   {
-    public int Size { get; set; }
-    public uint ResponseId { get; set; }
+    public required TaskCompletionSource<T> Task { get; init; }
   }
 }
