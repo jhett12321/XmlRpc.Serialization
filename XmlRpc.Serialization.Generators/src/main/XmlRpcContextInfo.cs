@@ -4,7 +4,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace XmlRpc.Serialization.Generators;
 
-public sealed record XmlRpcContextInfo
+internal sealed record XmlRpcContextInfo
 {
   public XmlRpcContextInfo(ClassDeclarationSyntax classDeclaration, AttributeData attributeData, List<SyntaxNode> parents)
   {

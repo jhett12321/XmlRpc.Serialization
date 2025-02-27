@@ -4,7 +4,7 @@ using Microsoft.CodeAnalysis;
 
 namespace XmlRpc.Serialization.Generators;
 
-public sealed record XmlRpcTypeInfo
+internal sealed record XmlRpcTypeInfo
 {
   public INamedTypeSymbol Type { get; }
 

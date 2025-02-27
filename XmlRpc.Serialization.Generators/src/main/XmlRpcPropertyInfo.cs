@@ -4,7 +4,7 @@ using Microsoft.CodeAnalysis;
 
 namespace XmlRpc.Serialization.Generators;
 
-public sealed record XmlRpcPropertyInfo
+internal sealed record XmlRpcPropertyInfo
 {
   private const string PropertyNameAttributeClassName = "XmlRpcPropertyNameAttribute";
   private const string PropertyIgnoreAttributeClassName = "XmlRpcIgnore";

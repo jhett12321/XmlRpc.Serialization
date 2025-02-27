@@ -1,6 +1,6 @@
 ﻿namespace XmlRpc.Serialization.Generators;
 
-public enum XmlRpcPropertyType
+internal enum XmlRpcPropertyType
 {
   Unsupported,
   BuiltIn,
