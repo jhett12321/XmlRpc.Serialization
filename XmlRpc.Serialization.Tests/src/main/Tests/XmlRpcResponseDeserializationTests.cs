@@ -1,55 +1,14 @@
-using System.Text;
+﻿using System.Text;
 using NUnit.Framework;
 using XmlRpc.Serialization.Exceptions;
-using XmlRpc.Serialization.Models;
 using XmlRpc.Serialization.Tests.Attributes;
 using XmlRpc.Serialization.Tests.Models;
 
 namespace XmlRpc.Serialization.Tests;
 
 [TestFixture]
-public sealed class XmlRpcSerializerTests
+public sealed class XmlRpcResponseDeserializationTests
 {
-  [Test]
-  [TestCase("""<?xml version="1.0" encoding="UTF-8"?><methodCall><methodName>Authenticate</methodName><params><param><value><string>SuperAdmin</string></value></param><param><value><string>SuperAdmin</string></value></param></params></methodCall>""",
-    "Authenticate", "SuperAdmin", "SuperAdmin")]
-  [TestCase("""<?xml version="1.0" encoding="UTF-8"?><methodCall><methodName>system.listMethods</methodName></methodCall>""",
-    "system.listMethods")]
-  public void SerializeValidRequestCreatesValidXml(string expected, string methodName, params string[] args)
-  {
-    XmlRpcRequestMessage requestMessage = new XmlRpcRequestMessage(methodName);
-    foreach (string arg in args)
-    {
-      requestMessage.Param(arg);
-    }
-
-    byte[] serialized = XmlRpcSerializer.SerializeRequest(requestMessage);
-    Assert.That(Encoding.UTF8.GetString(serialized), Is.EqualTo(expected));
-  }
-
-  [Test]
-  public void SerializeValidRequestStructCreatesValidXml()
-  {
-    const string expected = """<?xml version="1.0" encoding="UTF-8"?><methodCall><methodName>TrackMania.PlayerInfoChanged</methodName><params><param><value><struct><member><name>Login</name><value><string>AAAAaAaAAa0AaAaAaaaaAA</string></value></member><member><name>NickName</name><value><string>Bla</string></value></member><member><name>PlayerId</name><value><i4>236</i4></value></member><member><name>TeamId</name><value><i4>-1</i4></value></member><member><name>SpectatorStatus</name><value><i4>0</i4></value></member><member><name>LadderRanking</name><value><i4>-1</i4></value></member><member><name>Flags</name><value><i4>101000000</i4></value></member><member><name>LadderScore</name><value><double>0.000001</double></value></member></struct></value></param></params></methodCall>""";
-    OnPlayerInfoChangeRequest request = new OnPlayerInfoChangeRequest
-    {
-      Login = "AAAAaAaAAa0AaAaAaaaaAA",
-      NickName = "Bla",
-      PlayerId = 236,
-      TeamId = -1,
-      SpectatorStatus = 0,
-      LadderRanking = -1,
-      Flags = 101000000,
-      LadderScore = 0.000001,
-    };
-
-    XmlRpcRequestMessage requestMessage = new XmlRpcRequestMessage("TrackMania.PlayerInfoChanged")
-      .Param(request, OnPlayerInfoChangeRequestContext.OnPlayerInfoChangeRequest);
-
-    byte[] serialized = XmlRpcSerializer.SerializeRequest(requestMessage);
-    Assert.That(Encoding.UTF8.GetString(serialized), Is.EqualTo(expected));
-  }
-
   [Test]
   [TestCase<bool>("""
                   <?xml version="1.0" encoding="UTF-8"?>
@@ -508,7 +467,7 @@ public sealed class XmlRpcSerializerTests
                     </params>
                     </methodResponse>
                     """, "Return an array of all available XML-RPC methods on this server.")]
-  public void DeserializeWrongTypeThrowsSerializationException<T>(string xml, object value)
+  public void DeserializeValidResponseWrongTypeThrowsSerializationException<T>(string xml, object value)
   {
     byte[] data = Encoding.UTF8.GetBytes(xml);
 
@@ -516,31 +475,5 @@ public sealed class XmlRpcSerializerTests
     {
       XmlRpcSerializer.DeserializeResponse<T>(data);
     }, Throws.Exception.TypeOf<XmlRpcSerializationException>());
-  }
-
-  [Test]
-  [TestCase<bool>("""<?xml version="1.0" encoding="UTF-8"?><methodResponse><params><param><value><boolean>1</boolean></value></param></params></methodResponse>""", true)]
-  [TestCase<int>("""<?xml version="1.0" encoding="UTF-8"?><methodResponse><params><param><value><i4>-5</i4></value></param></params></methodResponse>""", -5)]
-  [TestCase<int>("""<?xml version="1.0" encoding="UTF-8"?><methodResponse><params><param><value><i4>1</i4></value></param></params></methodResponse>""", 1)]
-  [TestCase<double>("""<?xml version="1.0" encoding="UTF-8"?><methodResponse><params><param><value><double>-2.512345</double></value></param></params></methodResponse>""", -2.512345D)]
-  [TestCase<double>("""<?xml version="1.0" encoding="UTF-8"?><methodResponse><params><param><value><double>0.5</double></value></param></params></methodResponse>""", 0.5D)]
-  [TestCase<string>("""<?xml version="1.0" encoding="UTF-8"?><methodResponse><params><param><value><string>Return an array of all available XML-RPC methods on this server.</string></value></param></params></methodResponse>""", "Return an array of all available XML-RPC methods on this server.")]
-  public void SerializeValidResponseCreatesValidXml<T>(string expectedXml, T value)
-  {
-    byte[] serialized = XmlRpcSerializer.SerializeResponse(value);
-    Assert.That(Encoding.UTF8.GetString(serialized), Is.EqualTo(expectedXml));
-  }
-
-  [Test]
-  public void SerializeValidStructResponseCreatesValidXml()
-  {
-    const string expectedXml = """<?xml version="1.0" encoding="UTF-8"?><methodResponse><params><param><value><struct><member><name>Code</name><value><i4>4</i4></value></member><member><name>Name</name><value><string>Running - Play</string></value></member></struct></value></param></params></methodResponse>""";
-
-    ServerStatusResponse expected = new ServerStatusResponse();
-    expected.Code = 4;
-    expected.Name = "Running - Play";
-
-    byte[] serialized = XmlRpcSerializer.SerializeResponse(expected, ServerStatusResponseContext.ServerStatusResponse);
-    Assert.That(Encoding.UTF8.GetString(serialized), Is.EqualTo(expectedXml));
   }
 }
