@@ -78,6 +78,8 @@ jobs:
     outputs:
       version: ${{ steps.vars.outputs.VERSION }}
       tag: ${{ steps.vars.outputs.TAG }}
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
