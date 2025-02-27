@@ -16,7 +16,7 @@
         <RepositoryUrl>https://github.com/jhett12321/XmlRpc.Serialization</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
 
-        <PackageTags>XML-RPC;XmlRpc;Serialization</PackageTags>
+        <PackageTags>XML-RPC;XmlRpc;Serialization;XML</PackageTags>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
     </PropertyGroup>
 
