@@ -17,9 +17,10 @@ namespace XmlRpc.Serialization.Converters
       XmlRpcTokenType currentToken;
       while ((currentToken = reader.ReadNextToken()) == XmlRpcTokenType.StartMember)
       {
-        reader.ReadStructMember(out string memberName, out XmlRpcReader valueReader);
-        PopulateStructMember(retVal, memberName, valueReader);
-        valueReader.Dispose();
+        reader.ReadStructMember((memberName, valueReader) =>
+        {
+          PopulateStructMember(retVal, memberName, valueReader);
+        });
       }
 
       if (currentToken != XmlRpcTokenType.EndStruct)

@@ -90,19 +90,27 @@ public sealed class XmlRpcReader : IDisposable
     return TokenType;
   }
 
-  public XmlRpcReader ReadSubtree()
+  public XmlRpcReader ReadSubtree(bool copy)
   {
-    string xml = xmlReader.ReadOuterXml();
-    XmlRpcReader retVal = new XmlRpcReader(new StringReader(xml));
-    tokenTypeDirty = true;
+    XmlRpcReader retVal;
+    if (copy)
+    {
+      string xml = xmlReader.ReadOuterXml();
+      retVal = new XmlRpcReader(new StringReader(xml));
+    }
+    else
+    {
+      retVal = new XmlRpcReader(xmlReader.ReadSubtree());
+    }
 
+    tokenTypeDirty = true;
     return retVal;
   }
 
-  public void ReadStructMember(out string memberName, out XmlRpcReader valueReader)
+  public void ReadStructMember(Action<string, XmlRpcReader> readValue)
   {
     string? name = null;
-    XmlRpcReader? reader = null;
+    XmlRpcReader? valueReader = null;
 
     if (TokenType != XmlRpcTokenType.StartMember)
     {
@@ -110,35 +118,42 @@ public sealed class XmlRpcReader : IDisposable
     }
 
     Read();
-    ReadMemberToken();
-    ReadMemberToken();
+    switch (TokenType)
+    {
+      case XmlRpcTokenType.StartName:
+        name = ReadElementContentAsString();
+        break;
+      case XmlRpcTokenType.StartValue:
+        valueReader = ReadSubtree(true);
+        break;
+    }
 
-    if (name == null || reader == null)
+    switch (TokenType)
+    {
+      case XmlRpcTokenType.StartName:
+        name = ReadElementContentAsString();
+        break;
+      case XmlRpcTokenType.StartValue:
+        valueReader = ReadSubtree(false);
+        break;
+    }
+
+    if (name == null || valueReader == null)
     {
       throw new XmlRpcSerializationException($"Struct member is incomplete: '{name}'");
     }
 
-    memberName = name;
-    valueReader = reader;
+    readValue(name, valueReader);
+    valueReader.Dispose();
+
+    if (TokenType != XmlRpcTokenType.EndMember)
+    {
+      Read(XmlRpcTokenType.EndMember);
+    }
 
     if (TokenType != XmlRpcTokenType.EndMember)
     {
       throw new XmlRpcSerializationException($"Expected node type '{XmlRpcTokenType.EndMember}'");
-    }
-
-    return;
-
-    void ReadMemberToken()
-    {
-      switch (TokenType)
-      {
-        case XmlRpcTokenType.StartName:
-          name = ReadElementContentAsString();
-          break;
-        case XmlRpcTokenType.StartValue:
-          reader = ReadSubtree();
-          break;
-      }
     }
   }
 
