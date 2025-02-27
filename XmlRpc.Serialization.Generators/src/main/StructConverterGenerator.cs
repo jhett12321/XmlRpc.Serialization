@@ -23,10 +23,10 @@ internal class StructConverterGenerator : IIncrementalGenerator
       .Where(info => info is not null);
 
     IncrementalValueProvider<(Compilation, ImmutableArray<XmlRpcContextInfo?>)> compilation = context.CompilationProvider.Combine(classDeclarations.Collect());
-    context.RegisterSourceOutput(compilation, (spc, source) => Execute(source.Item1, source.Item2!, spc));
+    context.RegisterSourceOutput(compilation, (spc, source) => Execute(source.Item2!, spc));
   }
 
-  private void Execute(Compilation compilation, ImmutableArray<XmlRpcContextInfo> classes, SourceProductionContext context)
+  private void Execute(ImmutableArray<XmlRpcContextInfo> classes, SourceProductionContext context)
   {
     foreach (XmlRpcContextInfo classInfo in classes)
     {

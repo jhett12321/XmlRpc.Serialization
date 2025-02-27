@@ -157,9 +157,11 @@ public sealed class XmlRpcResponseDeserializationTests
                        </methodResponse>
                        """;
 
-    ServerStatusResponse expected = new ServerStatusResponse();
-    expected.Code = 4;
-    expected.Name = "Running - Play";
+    ServerStatusResponse expected = new ServerStatusResponse
+    {
+      Code = 4,
+      Name = "Running - Play",
+    };
 
     byte[] data = Encoding.UTF8.GetBytes(xml);
 
@@ -215,24 +217,28 @@ public sealed class XmlRpcResponseDeserializationTests
                        </methodResponse>
                        """;
 
-    PlayerInfoResponse expected = new PlayerInfoResponse();
-    expected.Uptime = 10279;
-    expected.NbrConnection = 1;
-    expected.MeanConnectionTime = 78;
-    expected.MeanNbrPlayer = 0;
-    expected.RecvNetRate = 202;
-    expected.SendNetRate = 65;
-    expected.TotalReceivingSize = 18852;
-    expected.TotalSendingSize = 5169;
-    expected.PlayerNetInfos = new List<PlayerNetInfo>();
+    PlayerInfoResponse expected = new PlayerInfoResponse
+    {
+      Uptime = 10279,
+      NbrConnection = 1,
+      MeanConnectionTime = 78,
+      MeanNbrPlayer = 0,
+      RecvNetRate = 202,
+      SendNetRate = 65,
+      TotalReceivingSize = 18852,
+      TotalSendingSize = 5169,
+      PlayerNetInfos = [],
+    };
 
-    PlayerNetInfo expectedPlayerInfo = new PlayerNetInfo();
-    expectedPlayerInfo.Login = "AAAAaAaAAa0AaAaAaaaaAA";
-    expectedPlayerInfo.IPAddress = "127.0.0.1";
-    expectedPlayerInfo.StateUpdateLatency = 0;
-    expectedPlayerInfo.StateUpdatePeriod = 0;
-    expectedPlayerInfo.LatestNetworkActivity = 0;
-    expectedPlayerInfo.PacketLossRate = 0.001276D;
+    PlayerNetInfo expectedPlayerInfo = new PlayerNetInfo
+    {
+      Login = "AAAAaAaAAa0AaAaAaaaaAA",
+      IpAddress = "127.0.0.1",
+      StateUpdateLatency = 0,
+      StateUpdatePeriod = 0,
+      LatestNetworkActivity = 0,
+      PacketLossRate = 0.001276D,
+    };
 
     expected.PlayerNetInfos.Add(expectedPlayerInfo);
 
@@ -258,7 +264,7 @@ public sealed class XmlRpcResponseDeserializationTests
     Assert.Multiple(() =>
     {
       Assert.That(responsePlayerInfo.Login, Is.EqualTo(expectedPlayerInfo.Login));
-      Assert.That(responsePlayerInfo.IPAddress, Is.EqualTo(expectedPlayerInfo.IPAddress));
+      Assert.That(responsePlayerInfo.IpAddress, Is.EqualTo(expectedPlayerInfo.IpAddress));
       Assert.That(responsePlayerInfo.StateUpdateLatency, Is.EqualTo(expectedPlayerInfo.StateUpdateLatency));
       Assert.That(responsePlayerInfo.StateUpdatePeriod, Is.EqualTo(expectedPlayerInfo.StateUpdatePeriod));
       Assert.That(responsePlayerInfo.LatestNetworkActivity, Is.EqualTo(expectedPlayerInfo.LatestNetworkActivity));
@@ -326,32 +332,38 @@ public sealed class XmlRpcResponseDeserializationTests
                        </methodResponse>
                        """;
 
-    PlayerInfoResponse expected = new PlayerInfoResponse();
-    expected.Uptime = 10279;
-    expected.NbrConnection = 1;
-    expected.MeanConnectionTime = 78;
-    expected.MeanNbrPlayer = 0;
-    expected.RecvNetRate = 202;
-    expected.SendNetRate = 65;
-    expected.TotalReceivingSize = 18852;
-    expected.TotalSendingSize = 5169;
-    expected.PlayerNetInfos = new List<PlayerNetInfo>();
+    PlayerInfoResponse expected = new PlayerInfoResponse
+    {
+      Uptime = 10279,
+      NbrConnection = 1,
+      MeanConnectionTime = 78,
+      MeanNbrPlayer = 0,
+      RecvNetRate = 202,
+      SendNetRate = 65,
+      TotalReceivingSize = 18852,
+      TotalSendingSize = 5169,
+      PlayerNetInfos = [],
+    };
 
-    PlayerNetInfo expectedNetInfo1 = new PlayerNetInfo();
-    expectedNetInfo1.Login = "AAAAaAaAAa0AaAaAaaaaAA";
-    expectedNetInfo1.IPAddress = "127.0.0.1";
-    expectedNetInfo1.StateUpdateLatency = 0;
-    expectedNetInfo1.StateUpdatePeriod = 0;
-    expectedNetInfo1.LatestNetworkActivity = 0;
-    expectedNetInfo1.PacketLossRate = 0.001276D;
+    PlayerNetInfo expectedNetInfo1 = new PlayerNetInfo
+    {
+      Login = "AAAAaAaAAa0AaAaAaaaaAA",
+      IpAddress = "127.0.0.1",
+      StateUpdateLatency = 0,
+      StateUpdatePeriod = 0,
+      LatestNetworkActivity = 0,
+      PacketLossRate = 0.001276D,
+    };
 
-    PlayerNetInfo expectedNetInfo2 = new PlayerNetInfo();
-    expectedNetInfo2.Login = "BBBBbBbBBb0BbBbBbbbbBB";
-    expectedNetInfo2.IPAddress = "192.168.1.1";
-    expectedNetInfo2.StateUpdateLatency = 0;
-    expectedNetInfo2.StateUpdatePeriod = 0;
-    expectedNetInfo2.LatestNetworkActivity = 0;
-    expectedNetInfo2.PacketLossRate = 0.001576D;
+    PlayerNetInfo expectedNetInfo2 = new PlayerNetInfo
+    {
+      Login = "BBBBbBbBBb0BbBbBbbbbBB",
+      IpAddress = "192.168.1.1",
+      StateUpdateLatency = 0,
+      StateUpdatePeriod = 0,
+      LatestNetworkActivity = 0,
+      PacketLossRate = 0.001576D,
+    };
 
     expected.PlayerNetInfos.Add(expectedNetInfo1);
     expected.PlayerNetInfos.Add(expectedNetInfo2);
@@ -381,7 +393,7 @@ public sealed class XmlRpcResponseDeserializationTests
       Assert.Multiple(() =>
       {
         Assert.That(actual.Login, Is.EqualTo(expected.Login));
-        Assert.That(actual.IPAddress, Is.EqualTo(expected.IPAddress));
+        Assert.That(actual.IpAddress, Is.EqualTo(expected.IpAddress));
         Assert.That(actual.StateUpdateLatency, Is.EqualTo(expected.StateUpdateLatency));
         Assert.That(actual.StateUpdatePeriod, Is.EqualTo(expected.StateUpdatePeriod));
         Assert.That(actual.LatestNetworkActivity, Is.EqualTo(expected.LatestNetworkActivity));

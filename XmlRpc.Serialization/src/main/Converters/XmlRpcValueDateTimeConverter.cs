@@ -1,19 +1,18 @@
 ﻿using System;
 
-namespace XmlRpc.Serialization.Converters
+namespace XmlRpc.Serialization.Converters;
+
+internal sealed class XmlRpcValueDateTimeConverter : XmlRpcValueConverter<DateTime>
 {
-  internal sealed class XmlRpcValueDateTimeConverter : XmlRpcValueConverter<DateTime>
+  public static readonly XmlRpcValueDateTimeConverter Instance = new XmlRpcValueDateTimeConverter();
+
+  public override DateTime Deserialize(XmlRpcReader reader)
   {
-    public static readonly XmlRpcValueDateTimeConverter Instance = new XmlRpcValueDateTimeConverter();
+    return reader.GetDateTime();
+  }
 
-    public override DateTime Deserialize(XmlRpcReader reader)
-    {
-      return reader.GetDateTime();
-    }
-
-    public override void Serialize(XmlRpcWriter writer, DateTime value)
-    {
-      writer.WriteDateTimeValue(value);
-    }
+  public override void Serialize(XmlRpcWriter writer, DateTime value)
+  {
+    writer.WriteDateTimeValue(value);
   }
 }

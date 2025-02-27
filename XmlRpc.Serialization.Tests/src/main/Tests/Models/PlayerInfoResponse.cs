@@ -32,16 +32,16 @@ public sealed class PlayerInfoResponse
   public int TotalSendingSize { get; set; }
 
   [XmlRpcPropertyName("PlayerNetInfos")]
-  public List<PlayerNetInfo> PlayerNetInfos { get; set; }
+  public List<PlayerNetInfo> PlayerNetInfos { get; set; } = null!;
 }
 
 public sealed class PlayerNetInfo
 {
   [XmlRpcPropertyName("Login")]
-  public string Login { get; set; }
+  public string Login { get; set; } = null!;
 
   [XmlRpcPropertyName("IPAddress")]
-  public string IPAddress { get; set; }
+  public string IpAddress { get; set; } = null!;
 
   [XmlRpcPropertyName("StateUpdateLatency")]
   public int StateUpdateLatency { get; set; }

@@ -8,10 +8,10 @@ internal partial class OnPlayerInfoChangeRequestContext;
 public sealed class OnPlayerInfoChangeRequest
 {
   [XmlRpcPropertyName("Login")]
-  public string Login { get; set; }
+  public string Login { get; set; } = null!;
 
   [XmlRpcPropertyName("NickName")]
-  public string NickName { get; set; }
+  public string NickName { get; set; } = null!;
 
   [XmlRpcPropertyName("PlayerId")]
   public int PlayerId { get; set; }

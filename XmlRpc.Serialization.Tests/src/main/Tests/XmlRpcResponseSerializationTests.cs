@@ -26,9 +26,11 @@ public sealed class XmlRpcResponseSerializationTests
   {
     const string expectedXml = """<?xml version="1.0" encoding="UTF-8"?><methodResponse><params><param><value><struct><member><name>Code</name><value><i4>4</i4></value></member><member><name>Name</name><value><string>Running - Play</string></value></member></struct></value></param></params></methodResponse>""";
 
-    ServerStatusResponse expected = new ServerStatusResponse();
-    expected.Code = 4;
-    expected.Name = "Running - Play";
+    ServerStatusResponse expected = new ServerStatusResponse
+    {
+      Code = 4,
+      Name = "Running - Play",
+    };
 
     byte[] serialized = XmlRpcSerializer.SerializeResponse(expected, ServerStatusResponseContext.ServerStatusResponse);
     Assert.That(Encoding.UTF8.GetString(serialized), Is.EqualTo(expectedXml));

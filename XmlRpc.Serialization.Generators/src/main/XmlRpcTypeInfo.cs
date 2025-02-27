@@ -10,8 +10,6 @@ internal sealed record XmlRpcTypeInfo
 
   public List<XmlRpcPropertyInfo> Properties { get; }
 
-  public string ConverterName { get; }
-
   public XmlRpcTypeInfo(INamedTypeSymbol type)
   {
     Type = type;

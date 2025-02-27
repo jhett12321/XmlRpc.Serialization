@@ -11,5 +11,5 @@ public sealed class ServerStatusResponse
   public int Code { get; set; }
 
   [XmlRpcPropertyName("Name")]
-  public string Name { get; set; }
+  public string Name { get; set; } = null!;
 }

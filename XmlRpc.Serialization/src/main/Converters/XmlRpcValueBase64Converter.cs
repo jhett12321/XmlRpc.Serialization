@@ -1,17 +1,16 @@
-﻿namespace XmlRpc.Serialization.Converters
+﻿namespace XmlRpc.Serialization.Converters;
+
+internal sealed class XmlRpcValueBase64Converter : XmlRpcValueConverter<byte[]>
 {
-  internal sealed class XmlRpcValueBase64Converter : XmlRpcValueConverter<byte[]>
+  public static readonly XmlRpcValueBase64Converter Instance = new XmlRpcValueBase64Converter();
+
+  public override byte[] Deserialize(XmlRpcReader reader)
   {
-    public static readonly XmlRpcValueBase64Converter Instance = new XmlRpcValueBase64Converter();
+    return reader.GetBase64Bytes();
+  }
 
-    public override byte[] Deserialize(XmlRpcReader reader)
-    {
-      return reader.GetBase64Bytes();
-    }
-
-    public override void Serialize(XmlRpcWriter writer, byte[] value)
-    {
-      writer.WriteBase64BytesValue(value);
-    }
+  public override void Serialize(XmlRpcWriter writer, byte[] value)
+  {
+    writer.WriteBase64BytesValue(value);
   }
 }

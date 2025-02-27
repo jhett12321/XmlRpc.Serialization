@@ -3,16 +3,11 @@ using XmlRpc.Serialization.Converters;
 
 namespace XmlRpc.Serialization.Models;
 
-public sealed class XmlRpcRequestMessage
+public sealed class XmlRpcRequestMessage(string methodName)
 {
-  public string MethodName { get; }
+  public string MethodName { get; } = methodName;
 
   public List<IXmlRpcRequestParameter> Parameters { get; } = [];
-
-  public XmlRpcRequestMessage(string methodName)
-  {
-    MethodName = methodName;
-  }
 
   public XmlRpcRequestMessage Param<T>(T value, XmlRpcValueConverter<T>? converter = null)
   {

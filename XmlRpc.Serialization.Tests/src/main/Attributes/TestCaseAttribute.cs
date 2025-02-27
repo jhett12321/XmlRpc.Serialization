@@ -5,7 +5,7 @@ using NUnit.Framework.Internal;
 namespace XmlRpc.Serialization.Tests.Attributes;
 
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-public class TestCaseAttribute<T>(params object[] arguments) : TestCaseAttribute(arguments), ITestBuilder
+public sealed class TestCaseAttribute<T>(params object[] arguments) : TestCaseAttribute(arguments), ITestBuilder
 {
   IEnumerable<TestMethod> ITestBuilder.BuildFrom(IMethodInfo method, Test? suite)
   {
@@ -19,7 +19,7 @@ public class TestCaseAttribute<T>(params object[] arguments) : TestCaseAttribute
 }
 
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-public class TestCaseAttribute<T1, T2>(params object[] arguments) : TestCaseAttribute(arguments), ITestBuilder
+public sealed class TestCaseAttribute<T1, T2>(params object[] arguments) : TestCaseAttribute(arguments), ITestBuilder
 {
   IEnumerable<TestMethod> ITestBuilder.BuildFrom(IMethodInfo method, Test? suite)
   {
@@ -33,7 +33,7 @@ public class TestCaseAttribute<T1, T2>(params object[] arguments) : TestCaseAttr
 }
 
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-public class TestCaseAttribute<T1, T2, T3>(params object[] arguments) : TestCaseAttribute(arguments), ITestBuilder
+public sealed class TestCaseAttribute<T1, T2, T3>(params object[] arguments) : TestCaseAttribute(arguments), ITestBuilder
 {
   IEnumerable<TestMethod> ITestBuilder.BuildFrom(IMethodInfo method, Test? suite)
   {
@@ -47,7 +47,7 @@ public class TestCaseAttribute<T1, T2, T3>(params object[] arguments) : TestCase
 }
 
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-public class TestCaseAttribute<T1, T2, T3, T4>(params object[] arguments) : TestCaseAttribute(arguments), ITestBuilder
+public sealed class TestCaseAttribute<T1, T2, T3, T4>(params object[] arguments) : TestCaseAttribute(arguments), ITestBuilder
 {
   IEnumerable<TestMethod> ITestBuilder.BuildFrom(IMethodInfo method, Test? suite)
   {
@@ -61,7 +61,7 @@ public class TestCaseAttribute<T1, T2, T3, T4>(params object[] arguments) : Test
 }
 
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-public class TestCaseAttribute<T1, T2, T3, T4, T5>(params object[] arguments) : TestCaseAttribute(arguments), ITestBuilder
+public sealed class TestCaseAttribute<T1, T2, T3, T4, T5>(params object[] arguments) : TestCaseAttribute(arguments), ITestBuilder
 {
   IEnumerable<TestMethod> ITestBuilder.BuildFrom(IMethodInfo method, Test? suite)
   {

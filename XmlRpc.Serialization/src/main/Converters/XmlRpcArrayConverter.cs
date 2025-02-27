@@ -3,15 +3,8 @@ using XmlRpc.Serialization.Exceptions;
 
 namespace XmlRpc.Serialization.Converters;
 
-public sealed class XmlRpcArrayConverter<T> : XmlRpcValueConverter<List<T>>
+public sealed class XmlRpcArrayConverter<T>(XmlRpcValueConverter<T> elementConverter) : XmlRpcValueConverter<List<T>>
 {
-  private readonly XmlRpcValueConverter<T> elementConverter;
-
-  public XmlRpcArrayConverter(XmlRpcValueConverter<T> elementConverter)
-  {
-    this.elementConverter = elementConverter;
-  }
-
   public override List<T> Deserialize(XmlRpcReader reader)
   {
     List<T> retVal = [];

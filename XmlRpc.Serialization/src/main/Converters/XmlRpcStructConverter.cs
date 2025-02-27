@@ -1,51 +1,50 @@
 ﻿using XmlRpc.Serialization.Exceptions;
 
-namespace XmlRpc.Serialization.Converters
+namespace XmlRpc.Serialization.Converters;
+
+public abstract class XmlRpcStructConverter<T> : XmlRpcValueConverter<T> where T : new()
 {
-  public abstract class XmlRpcStructConverter<T> : XmlRpcValueConverter<T> where T : new()
+  public override T Deserialize(XmlRpcReader reader)
   {
-    public override T Deserialize(XmlRpcReader reader)
+    T retVal = new T();
+    if (reader.TokenType != XmlRpcTokenType.StartValue)
     {
-      T retVal = new T();
-      if (reader.TokenType != XmlRpcTokenType.StartValue)
-      {
-        reader.Read(XmlRpcTokenType.StartValue);
-      }
-
-      reader.Read(XmlRpcTokenType.StartStruct);
-
-      XmlRpcTokenType currentToken;
-      while ((currentToken = reader.ReadNextToken()) == XmlRpcTokenType.StartMember)
-      {
-        reader.ReadStructMember((memberName, valueReader) =>
-        {
-          PopulateStructMember(retVal, memberName, valueReader);
-        });
-      }
-
-      if (currentToken != XmlRpcTokenType.EndStruct)
-      {
-        throw new XmlRpcSerializationException($"Unexpected token '{currentToken}', expected '{XmlRpcTokenType.EndStruct}'.");
-      }
-
-      reader.Read(XmlRpcTokenType.EndValue);
-
-      return retVal;
+      reader.Read(XmlRpcTokenType.StartValue);
     }
 
-    public override void Serialize(XmlRpcWriter writer, T value)
+    reader.Read(XmlRpcTokenType.StartStruct);
+
+    XmlRpcTokenType currentToken;
+    while ((currentToken = reader.ReadNextToken()) == XmlRpcTokenType.StartMember)
     {
-      writer.Write(XmlRpcTokenType.StartValue);
-      writer.Write(XmlRpcTokenType.StartStruct);
-
-      WriteStructMembers(writer, value);
-
-      writer.Write(XmlRpcTokenType.EndStruct);
-      writer.Write(XmlRpcTokenType.EndValue);
+      reader.ReadStructMember((memberName, valueReader) =>
+      {
+        PopulateStructMember(retVal, memberName, valueReader);
+      });
     }
 
-    protected abstract void PopulateStructMember(T value, string memberName, XmlRpcReader valueReader);
+    if (currentToken != XmlRpcTokenType.EndStruct)
+    {
+      throw new XmlRpcSerializationException($"Unexpected token '{currentToken}', expected '{XmlRpcTokenType.EndStruct}'.");
+    }
 
-    protected abstract void WriteStructMembers(XmlRpcWriter writer, T value);
+    reader.Read(XmlRpcTokenType.EndValue);
+
+    return retVal;
   }
+
+  public override void Serialize(XmlRpcWriter writer, T value)
+  {
+    writer.Write(XmlRpcTokenType.StartValue);
+    writer.Write(XmlRpcTokenType.StartStruct);
+
+    WriteStructMembers(writer, value);
+
+    writer.Write(XmlRpcTokenType.EndStruct);
+    writer.Write(XmlRpcTokenType.EndValue);
+  }
+
+  protected abstract void PopulateStructMember(T value, string memberName, XmlRpcReader valueReader);
+
+  protected abstract void WriteStructMembers(XmlRpcWriter writer, T value);
 }

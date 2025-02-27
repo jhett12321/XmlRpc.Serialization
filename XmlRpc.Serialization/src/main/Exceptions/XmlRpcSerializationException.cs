@@ -2,4 +2,4 @@
 
 namespace XmlRpc.Serialization.Exceptions;
 
-public class XmlRpcSerializationException(string message) : Exception(message);
+public sealed class XmlRpcSerializationException(string message) : Exception(message);
