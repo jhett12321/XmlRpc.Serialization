@@ -8,10 +8,7 @@ public sealed class XmlRpcArrayConverter<T>(XmlRpcValueConverter<T> elementConve
   public override List<T> Deserialize(XmlRpcReader reader)
   {
     List<T> retVal = [];
-    if (reader.TokenType != XmlRpcTokenType.StartValue)
-    {
-      reader.Read(XmlRpcTokenType.StartValue);
-    }
+    reader.ReadOrAdvance(XmlRpcTokenType.StartValue);
 
     reader.Read(XmlRpcTokenType.StartArray);
     reader.Read(XmlRpcTokenType.StartData);

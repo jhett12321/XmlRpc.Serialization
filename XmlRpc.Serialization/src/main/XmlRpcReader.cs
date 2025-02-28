@@ -7,6 +7,9 @@ using XmlRpc.Serialization.Exceptions;
 
 namespace XmlRpc.Serialization;
 
+/// <summary>
+/// Represents a <see cref="XmlReader"/> configured to parse valid XML-RPC tokens, providing forward-only access to XML data.
+/// </summary>
 public sealed class XmlRpcReader : IDisposable
 {
   private static readonly XmlReaderSettings ReaderSettings = new XmlReaderSettings
@@ -21,41 +24,53 @@ public sealed class XmlRpcReader : IDisposable
 
   private readonly XmlReader xmlReader;
 
-  private XmlRpcTokenType tokenType;
-  private bool tokenTypeDirty;
+  /// <summary>
+  /// Gets the type of the last processed XML-RPC token.
+  /// </summary>
+  public XmlRpcTokenType TokenType => GetCurrentToken();
 
-  public XmlRpcTokenType TokenType
-  {
-    get
-    {
-      if (tokenTypeDirty)
-      {
-        UpdateCurrentNode();
-      }
-
-      return tokenType;
-    }
-  }
-
+  /// <summary>
+  /// Gets the qualified name of the current node.
+  /// </summary>
   public string Name => xmlReader.Name;
 
+  /// <summary>
+  /// Gets the text value of the current node.
+  /// </summary>
   public string Value => xmlReader.Value;
 
+  /// <summary>
+  /// Creates a new <see cref="XmlRpcReader"/> using the specified stream.
+  /// </summary>
+  /// <param name="stream">The stream that contains the XML data.</param>
   public XmlRpcReader(Stream stream)
   {
     xmlReader = XmlReader.Create(stream, ReaderSettings);
   }
 
+  /// <summary>
+  /// Creates a new <see cref="XmlRpcReader"/> using the specified <see cref="TextReader"/>.
+  /// </summary>
+  /// <param name="textReader">The text reader from which to read the XML data.</param>
   public XmlRpcReader(TextReader textReader)
   {
     xmlReader = XmlReader.Create(textReader, ReaderSettings);
   }
 
+  /// <summary>
+  /// Creates a new <see cref="XmlRpcReader"/> using the specified <see cref="XmlReader"/>.
+  /// </summary>
+  /// <param name="xmlReader">The XML reader from which to read the XML data.</param>
   public XmlRpcReader(XmlReader xmlReader)
   {
     this.xmlReader = xmlReader;
   }
 
+  /// <summary>
+  /// Reads the next XML-RPC token from the input source, and checks if the token matches the specified <see cref="XmlRpcTokenType"/>.
+  /// </summary>
+  /// <param name="expectedTokenType">The expected XML-RPC token type.</param>
+  /// <exception cref="XmlRpcSerializationException">Thrown if the next XML-RPC token does not match the value specified in the <see cref="expectedTokenType"/> parameter.</exception>
   public void Read(XmlRpcTokenType expectedTokenType)
   {
     bool hasNextToken = Read();
@@ -70,20 +85,40 @@ public sealed class XmlRpcReader : IDisposable
     }
   }
 
+  public void ReadOrAdvance(XmlRpcTokenType expectedTokenType)
+  {
+    if (TokenType == expectedTokenType)
+    {
+      return;
+    }
+
+    Read(expectedTokenType);
+  }
+
+  /// <summary>
+  /// Reads the next XML-RPC token from the input source.
+  /// </summary>
+  /// <returns>True if the token was read successfully, else false.</returns>
   public bool Read()
   {
     bool hasValue = xmlReader.Read();
-    tokenTypeDirty = true;
     return hasValue;
   }
 
+  /// <summary>
+  /// Reads the current XML element and returns the contents as a <see cref="string"/>.
+  /// </summary>
+  /// <returns></returns>
   public string ReadElementContentAsString()
   {
     string retVal = xmlReader.ReadElementContentAsString();
-    tokenTypeDirty = true;
     return retVal;
   }
 
+  /// <summary>
+  /// Reads the next XML-RPC token from the input source.
+  /// </summary>
+  /// <returns>The XML-RPC token type after advancing to the next token.</returns>
   public XmlRpcTokenType ReadNextToken()
   {
     Read();
@@ -103,7 +138,6 @@ public sealed class XmlRpcReader : IDisposable
       retVal = new XmlRpcReader(xmlReader.ReadSubtree());
     }
 
-    tokenTypeDirty = true;
     return retVal;
   }
 
@@ -146,15 +180,16 @@ public sealed class XmlRpcReader : IDisposable
     readValue(name, valueReader);
     valueReader.Dispose();
 
-    if (TokenType != XmlRpcTokenType.EndMember)
-    {
-      Read(XmlRpcTokenType.EndMember);
-    }
+    ReadOrAdvance(XmlRpcTokenType.EndMember);
+  }
 
-    if (TokenType != XmlRpcTokenType.EndMember)
-    {
-      throw new XmlRpcSerializationException($"Expected node type '{XmlRpcTokenType.EndMember}'");
-    }
+  public T ReadParameter<T>(Func<XmlRpcReader, T> readValue)
+  {
+    ReadOrAdvance(XmlRpcTokenType.StartParam);
+    T retVal = readValue(this);
+    ReadOrAdvance(XmlRpcTokenType.EndParam);
+
+    return retVal;
   }
 
   public int GetInt32()
@@ -169,10 +204,7 @@ public sealed class XmlRpcReader : IDisposable
 
   public string GetString()
   {
-    if (TokenType != XmlRpcTokenType.StartValue)
-    {
-      Read(XmlRpcTokenType.StartValue);
-    }
+    ReadOrAdvance(XmlRpcTokenType.StartValue);
 
     Read();
 
@@ -187,7 +219,6 @@ public sealed class XmlRpcReader : IDisposable
       value = ReadElementContentAsString();
     }
 
-    tokenTypeDirty = true;
     ValidateValueNode(XmlNodeType.EndElement, "value");
 
     return value;
@@ -220,53 +251,52 @@ public sealed class XmlRpcReader : IDisposable
     return Unsafe.As<int, T>(ref value);
   }
 
-  private void UpdateCurrentNode()
+  private XmlRpcTokenType GetCurrentToken()
   {
-    tokenType = xmlReader.NodeType switch
+    XmlNodeType nodeType = xmlReader.NodeType;
+    string? nodeName = nodeType is XmlNodeType.Element or XmlNodeType.EndElement ? xmlReader.Name : null;
+
+    return nodeType switch
     {
       XmlNodeType.None => XmlRpcTokenType.None,
       XmlNodeType.XmlDeclaration => XmlRpcTokenType.StartXmlDeclaration,
-      XmlNodeType.Element when xmlReader.Name == "methodResponse" => XmlRpcTokenType.StartMethodResponse,
-      XmlNodeType.Element when xmlReader.Name == "methodCall" => XmlRpcTokenType.StartMethodCall,
-      XmlNodeType.Element when xmlReader.Name == "params" => XmlRpcTokenType.StartParams,
-      XmlNodeType.Element when xmlReader.Name == "param" => XmlRpcTokenType.StartParam,
-      XmlNodeType.Element when xmlReader.Name == "fault" => XmlRpcTokenType.StartFault,
-      XmlNodeType.Element when xmlReader.Name == "value" => XmlRpcTokenType.StartValue,
-      XmlNodeType.Element when xmlReader.Name == "struct" => XmlRpcTokenType.StartStruct,
-      XmlNodeType.Element when xmlReader.Name == "member" => XmlRpcTokenType.StartMember,
-      XmlNodeType.Element when xmlReader.Name == "name" => XmlRpcTokenType.StartName,
-      XmlNodeType.Element when xmlReader.Name == "array" => XmlRpcTokenType.StartArray,
-      XmlNodeType.Element when xmlReader.Name == "data" => XmlRpcTokenType.StartData,
-      XmlNodeType.EndElement when xmlReader.Name == "methodResponse" => XmlRpcTokenType.EndMethodResponse,
-      XmlNodeType.EndElement when xmlReader.Name == "methodCall" => XmlRpcTokenType.EndMethodCall,
-      XmlNodeType.EndElement when xmlReader.Name == "params" => XmlRpcTokenType.EndParams,
-      XmlNodeType.EndElement when xmlReader.Name == "params" => XmlRpcTokenType.EndParams,
-      XmlNodeType.EndElement when xmlReader.Name == "param" => XmlRpcTokenType.EndParam,
-      XmlNodeType.EndElement when xmlReader.Name == "fault" => XmlRpcTokenType.EndFault,
-      XmlNodeType.EndElement when xmlReader.Name == "value" => XmlRpcTokenType.EndValue,
-      XmlNodeType.EndElement when xmlReader.Name == "struct" => XmlRpcTokenType.EndStruct,
-      XmlNodeType.EndElement when xmlReader.Name == "member" => XmlRpcTokenType.EndMember,
-      XmlNodeType.EndElement when xmlReader.Name == "name" => XmlRpcTokenType.EndName,
-      XmlNodeType.EndElement when xmlReader.Name == "array" => XmlRpcTokenType.EndArray,
-      XmlNodeType.EndElement when xmlReader.Name == "data" => XmlRpcTokenType.EndData,
+      XmlNodeType.Element when nodeName == "methodResponse" => XmlRpcTokenType.StartMethodResponse,
+      XmlNodeType.Element when nodeName == "methodCall" => XmlRpcTokenType.StartMethodCall,
+      XmlNodeType.Element when nodeName == "methodName" => XmlRpcTokenType.StartMethodName,
+      XmlNodeType.Element when nodeName == "params" => XmlRpcTokenType.StartParams,
+      XmlNodeType.Element when nodeName == "param" => XmlRpcTokenType.StartParam,
+      XmlNodeType.Element when nodeName == "fault" => XmlRpcTokenType.StartFault,
+      XmlNodeType.Element when nodeName == "value" => XmlRpcTokenType.StartValue,
+      XmlNodeType.Element when nodeName == "struct" => XmlRpcTokenType.StartStruct,
+      XmlNodeType.Element when nodeName == "member" => XmlRpcTokenType.StartMember,
+      XmlNodeType.Element when nodeName == "name" => XmlRpcTokenType.StartName,
+      XmlNodeType.Element when nodeName == "array" => XmlRpcTokenType.StartArray,
+      XmlNodeType.Element when nodeName == "data" => XmlRpcTokenType.StartData,
+      XmlNodeType.EndElement when nodeName == "methodResponse" => XmlRpcTokenType.EndMethodResponse,
+      XmlNodeType.EndElement when nodeName == "methodCall" => XmlRpcTokenType.EndMethodCall,
+      XmlNodeType.EndElement when nodeName == "methodName" => XmlRpcTokenType.EndMethodName,
+      XmlNodeType.EndElement when nodeName == "params" => XmlRpcTokenType.EndParams,
+      XmlNodeType.EndElement when nodeName == "params" => XmlRpcTokenType.EndParams,
+      XmlNodeType.EndElement when nodeName == "param" => XmlRpcTokenType.EndParam,
+      XmlNodeType.EndElement when nodeName == "fault" => XmlRpcTokenType.EndFault,
+      XmlNodeType.EndElement when nodeName == "value" => XmlRpcTokenType.EndValue,
+      XmlNodeType.EndElement when nodeName == "struct" => XmlRpcTokenType.EndStruct,
+      XmlNodeType.EndElement when nodeName == "member" => XmlRpcTokenType.EndMember,
+      XmlNodeType.EndElement when nodeName == "name" => XmlRpcTokenType.EndName,
+      XmlNodeType.EndElement when nodeName == "array" => XmlRpcTokenType.EndArray,
+      XmlNodeType.EndElement when nodeName == "data" => XmlRpcTokenType.EndData,
       _ => XmlRpcTokenType.Unknown,
     };
-
-    tokenTypeDirty = false;
   }
 
   private string ReadSimpleValueNode(params string[] expectedNodeNames)
   {
-    if (TokenType != XmlRpcTokenType.StartValue)
-    {
-      Read(XmlRpcTokenType.StartValue);
-    }
+    ReadOrAdvance(XmlRpcTokenType.StartValue);
 
     Read();
     ValidateValueNode(XmlNodeType.Element, expectedNodeNames);
 
     string value = ReadElementContentAsString();
-    tokenTypeDirty = true;
 
     ValidateValueNode(XmlNodeType.EndElement, "value");
 

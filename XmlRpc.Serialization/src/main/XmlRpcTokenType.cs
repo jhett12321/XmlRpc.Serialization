@@ -8,6 +8,8 @@ public enum XmlRpcTokenType
   EndXmlDeclaration,
   StartMethodCall,
   EndMethodCall,
+  StartMethodName,
+  EndMethodName,
   StartMethodResponse,
   EndMethodResponse,
   StartParams,

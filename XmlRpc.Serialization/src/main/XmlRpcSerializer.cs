@@ -38,6 +38,50 @@ public static class XmlRpcSerializer
     return requestStream.ToArray();
   }
 
+  public static void DeserializeRequest(byte[] serializedXml, IXmlRpcRequestHandler requestHandler)
+  {
+    using MemoryStream stream = new MemoryStream(serializedXml);
+    using XmlRpcReader reader = new XmlRpcReader(stream);
+
+    string? methodName = null;
+    XmlRpcReader? paramsReader = null;
+
+    reader.Read(XmlRpcTokenType.StartXmlDeclaration);
+    reader.Read(XmlRpcTokenType.StartMethodCall);
+
+    switch (reader.ReadNextToken())
+    {
+      case XmlRpcTokenType.StartMethodName:
+        methodName = reader.ReadElementContentAsString();
+        break;
+      case XmlRpcTokenType.StartParams:
+        paramsReader = reader.ReadSubtree(true);
+        break;
+    }
+
+    switch (reader.TokenType)
+    {
+      case XmlRpcTokenType.StartMethodName:
+        methodName = reader.ReadElementContentAsString();
+        break;
+      case XmlRpcTokenType.StartParams:
+        paramsReader = reader.ReadSubtree(false);
+        break;
+    }
+
+    if (methodName == null)
+    {
+      throw new XmlRpcSerializationException("methodCall - methodName is not specified.");
+    }
+
+    paramsReader?.Read(XmlRpcTokenType.StartParams);
+    requestHandler.HandleRequestMessage(methodName, paramsReader);
+    paramsReader?.Dispose();
+
+    reader.ReadOrAdvance(XmlRpcTokenType.EndMethodCall);
+    reader.Read();
+  }
+
   public static byte[] SerializeResponse<T>(T response, XmlRpcValueConverter<T>? converter = null)
   {
     converter ??= XmlRpcConverterFactory.GetBuiltInValueConverter<T>();
@@ -90,6 +134,7 @@ public static class XmlRpcSerializer
         reader.Read(XmlRpcTokenType.EndParam);
         reader.Read(XmlRpcTokenType.EndParams);
         reader.Read(XmlRpcTokenType.EndMethodResponse);
+        reader.Read();
 
         return retVal;
       }
@@ -98,6 +143,7 @@ public static class XmlRpcSerializer
         XmlRpcFaultResponse faultInfo = XmlRpcFaultResponseConverter.Instance.Deserialize(reader);
         reader.Read(XmlRpcTokenType.EndFault);
         reader.Read(XmlRpcTokenType.EndMethodResponse);
+        reader.Read();
 
         throw new XmlRpcFaultException(faultInfo, $"Received fault response: ({faultInfo.FaultCode}) {faultInfo.Message}");
       }

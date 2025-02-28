@@ -7,11 +7,7 @@ public abstract class XmlRpcStructConverter<T> : XmlRpcValueConverter<T> where T
   public override T Deserialize(XmlRpcReader reader)
   {
     T retVal = new T();
-    if (reader.TokenType != XmlRpcTokenType.StartValue)
-    {
-      reader.Read(XmlRpcTokenType.StartValue);
-    }
-
+    reader.ReadOrAdvance(XmlRpcTokenType.StartValue);
     reader.Read(XmlRpcTokenType.StartStruct);
 
     XmlRpcTokenType currentToken;
