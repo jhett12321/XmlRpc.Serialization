@@ -2,7 +2,7 @@
 
 namespace XmlRpc.Serialization.Attributes;
 
-[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+[AttributeUsage(AttributeTargets.Class)]
 public sealed class XmlRpcStructSerializableAttribute(Type type) : Attribute
 {
   public Type Type { get; } = type;
