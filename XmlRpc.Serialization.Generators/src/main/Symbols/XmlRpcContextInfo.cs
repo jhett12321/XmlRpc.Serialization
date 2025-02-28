@@ -2,7 +2,7 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace XmlRpc.Serialization.Generators;
+namespace XmlRpc.Serialization.Generators.Symbols;
 
 internal sealed record XmlRpcContextInfo
 {

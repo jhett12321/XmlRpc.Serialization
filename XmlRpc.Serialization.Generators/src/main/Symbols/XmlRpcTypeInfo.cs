@@ -2,7 +2,7 @@
 using System.Linq;
 using Microsoft.CodeAnalysis;
 
-namespace XmlRpc.Serialization.Generators;
+namespace XmlRpc.Serialization.Generators.Symbols;
 
 internal sealed record XmlRpcTypeInfo
 {

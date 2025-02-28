@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using XmlRpc.Serialization.Generators.Symbols;
 
 namespace XmlRpc.Serialization.Generators;
 
@@ -106,7 +107,7 @@ internal class StructConverterGenerator : IIncrementalGenerator
   {
     StringBuilder stringBuilder = new StringBuilder();
 
-    Dictionary<INamedTypeSymbol, XmlRpcTypeInfo> serializedTypes = new Dictionary<INamedTypeSymbol, XmlRpcTypeInfo>();
+    Dictionary<INamedTypeSymbol, XmlRpcTypeInfo> serializedTypes = new Dictionary<INamedTypeSymbol, XmlRpcTypeInfo>(SymbolEqualityComparer.Default);
     serializedTypes.Add(classInfo.SerializedType.Type, classInfo.SerializedType);
     CollectSerializedTypes(serializedTypes, classInfo.SerializedType);
 
@@ -127,12 +128,12 @@ internal class StructConverterGenerator : IIncrementalGenerator
         continue;
       }
 
-      switch (property.XmlRpcPropertyType)
+      switch (property.XmlRpcSerializedType)
       {
-        case XmlRpcPropertyType.UserArray:
+        case XmlRpcSerializedType.UserArray:
           type = type.TypeArguments.OfType<INamedTypeSymbol>().First();
           break;
-        case XmlRpcPropertyType.UserStruct:
+        case XmlRpcSerializedType.UserStruct:
           break;
         default:
           continue;
@@ -250,16 +251,16 @@ internal class StructConverterGenerator : IIncrementalGenerator
         continue;
       }
 
-      string converterCall = property.XmlRpcPropertyType switch
+      string converterCall = property.XmlRpcSerializedType switch
       {
-        XmlRpcPropertyType.BuiltIn => $"XmlRpcConverterFactory.GetBuiltInValueConverter<{property.Type}>().Deserialize(valueReader);",
-        XmlRpcPropertyType.UserArray => $"{contextInfo.ClassDeclaration.Identifier.Text}.{((INamedTypeSymbol)property.Type).TypeArguments[0].Name}List.Deserialize(valueReader);",
-        XmlRpcPropertyType.UserStruct => $"{contextInfo.ClassDeclaration.Identifier.Text}.{property.Type.Name}.Deserialize(valueReader);",
+        XmlRpcSerializedType.BuiltIn => $"XmlRpcConverterFactory.GetBuiltInValueConverter<{property.Type}>().Deserialize(valueReader);",
+        XmlRpcSerializedType.UserArray => $"{contextInfo.ClassDeclaration.Identifier.Text}.{((INamedTypeSymbol)property.Type).TypeArguments[0].Name}List.Deserialize(valueReader);",
+        XmlRpcSerializedType.UserStruct => $"{contextInfo.ClassDeclaration.Identifier.Text}.{property.Type.Name}.Deserialize(valueReader);",
         _ => throw new NotImplementedException($"Unsupported property type {property.Type.Name}"),
       };
 
       stringBuilder.AppendLine($"""
-                                 {childIndent}    case "{property.SerializedType}":
+                                 {childIndent}    case "{property.SerializedPropertyName}":
                                  {childIndent}      value.{property.PropertyName} = {converterCall}
                                  {childIndent}      break;
                                  """);
@@ -279,16 +280,16 @@ internal class StructConverterGenerator : IIncrementalGenerator
         continue;
       }
 
-      string converterCall = property.XmlRpcPropertyType switch
+      string converterCall = property.XmlRpcSerializedType switch
       {
-        XmlRpcPropertyType.BuiltIn => $"XmlRpcConverterFactory.GetBuiltInValueConverter<{property.Type}>().Serialize(writer, value.{property.PropertyName});",
-        XmlRpcPropertyType.UserArray => $"{contextInfo.ClassDeclaration.Identifier.Text}.{((INamedTypeSymbol)property.Type).TypeArguments[0].Name}List.Serialize(writer, value.{property.PropertyName});",
-        XmlRpcPropertyType.UserStruct => $"{contextInfo.ClassDeclaration.Identifier.Text}.{property.Type.Name}.Serialize(writer, value.{property.PropertyName});",
+        XmlRpcSerializedType.BuiltIn => $"XmlRpcConverterFactory.GetBuiltInValueConverter<{property.Type}>().Serialize(writer, value.{property.PropertyName});",
+        XmlRpcSerializedType.UserArray => $"{contextInfo.ClassDeclaration.Identifier.Text}.{((INamedTypeSymbol)property.Type).TypeArguments[0].Name}List.Serialize(writer, value.{property.PropertyName});",
+        XmlRpcSerializedType.UserStruct => $"{contextInfo.ClassDeclaration.Identifier.Text}.{property.Type.Name}.Serialize(writer, value.{property.PropertyName});",
         _ => throw new NotImplementedException($"Unsupported property type {property.Type.Name}"),
       };
 
       stringBuilder.AppendLine($"{childIndent}  writer.Write(XmlRpcTokenType.StartMember);");
-      stringBuilder.AppendLine($"{childIndent}  writer.WriteElement(\"name\", \"{property.SerializedType}\");");
+      stringBuilder.AppendLine($"{childIndent}  writer.WriteElement(\"name\", \"{property.SerializedPropertyName}\");");
       stringBuilder.AppendLine($"{childIndent}  {converterCall}");
       stringBuilder.AppendLine($"{childIndent}  writer.Write(XmlRpcTokenType.EndMember);");
     }
