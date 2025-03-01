@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using Microsoft.CodeAnalysis;
 
 namespace XmlRpc.Serialization.Generators.Symbols;
@@ -8,12 +7,25 @@ internal sealed record XmlRpcTypeInfo
 {
   public INamedTypeSymbol Type { get; }
 
-  public List<XmlRpcPropertyInfo> Properties { get; }
+  public List<XmlRpcPropertyInfo> Properties { get; } = [];
+
+  public List<XmlRpcMethodInfo> Methods { get; } = [];
 
   public XmlRpcTypeInfo(INamedTypeSymbol type)
   {
     Type = type;
-    Properties = type.GetMembers().OfType<IPropertySymbol>()
-      .Select(property => new XmlRpcPropertyInfo(property)).ToList();
+
+    foreach (ISymbol symbol in type.GetMembers())
+    {
+      switch (symbol)
+      {
+        case IMethodSymbol methodSymbol:
+          Methods.Add(new XmlRpcMethodInfo(methodSymbol));
+          break;
+        case IPropertySymbol propertySymbol:
+          Properties.Add(new XmlRpcPropertyInfo(propertySymbol));
+          break;
+      }
+    }
   }
 }

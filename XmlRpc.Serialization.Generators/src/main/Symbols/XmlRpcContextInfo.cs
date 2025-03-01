@@ -1,22 +1,83 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using XmlRpc.Serialization.Generators.Extensions;
 
 namespace XmlRpc.Serialization.Generators.Symbols;
 
-internal sealed record XmlRpcContextInfo
+internal sealed record XmlRpcContextInfo(ClassDeclarationSyntax Context, XmlRpcTypeInfo SerializedType)
 {
-  public XmlRpcContextInfo(ClassDeclarationSyntax classDeclaration, AttributeData attributeData, List<SyntaxNode> parents)
+  public ClassDeclarationSyntax Context { get; } = Context;
+
+  public List<SyntaxNode> Parents { get; } = Context.GetParentNodes();
+
+  public XmlRpcTypeInfo SerializedType { get; } = SerializedType;
+
+  public string GetGeneratedFileName()
   {
-    ClassDeclaration = classDeclaration;
-    Parents = parents;
-    SerializedType = new XmlRpcTypeInfo((INamedTypeSymbol)attributeData.ConstructorArguments[0].Value!);
+    StringBuilder stringBuilder = new StringBuilder();
+    foreach (SyntaxNode node in Parents)
+    {
+      switch (node)
+      {
+        case BaseNamespaceDeclarationSyntax namespaceDeclaration:
+          stringBuilder.Append(namespaceDeclaration.Name);
+          stringBuilder.Append('.');
+          break;
+        case TypeDeclarationSyntax typeDeclaration:
+          stringBuilder.Append(typeDeclaration.Identifier.Text);
+          stringBuilder.Append('.');
+          break;
+        default:
+          throw new Exception($"Unexpected SyntaxNode {node.GetType().FullName}");
+      }
+    }
+
+    stringBuilder.Append(Context.Identifier.Text);
+    stringBuilder.Append(".g.cs");
+    return stringBuilder.ToString();
   }
 
-  public ClassDeclarationSyntax ClassDeclaration { get; }
+  public List<XmlRpcTypeInfo> GetSerializedTypes()
+  {
+    Dictionary<INamedTypeSymbol, XmlRpcTypeInfo> serializedTypes = new Dictionary<INamedTypeSymbol, XmlRpcTypeInfo>(SymbolEqualityComparer.Default);
+    serializedTypes.Add(SerializedType.Type, SerializedType);
 
-  public List<SyntaxNode> Parents { get; }
+    CollectSerializedTypesFromProperties(serializedTypes, SerializedType);
+    return serializedTypes.Values.ToList();
+  }
 
-  // public XmlRpcStructSerializableAttribute(Type type)
-  public XmlRpcTypeInfo SerializedType { get; }
+  private void CollectSerializedTypesFromProperties(Dictionary<INamedTypeSymbol, XmlRpcTypeInfo> serializedTypes, XmlRpcTypeInfo typeInfo)
+  {
+    foreach (XmlRpcPropertyInfo property in typeInfo.Properties)
+    {
+      if (property.Ignored || property.Type is not INamedTypeSymbol type)
+      {
+        continue;
+      }
+
+      switch (property.XmlRpcSerializedType)
+      {
+        case XmlRpcSerializedType.UserArray:
+          type = type.TypeArguments.OfType<INamedTypeSymbol>().First();
+          break;
+        case XmlRpcSerializedType.UserStruct:
+          break;
+        default:
+          continue;
+      }
+
+      XmlRpcTypeInfo childTypeInfo = new XmlRpcTypeInfo(type);
+      if (serializedTypes.ContainsKey(childTypeInfo.Type))
+      {
+        continue;
+      }
+
+      serializedTypes.Add(childTypeInfo.Type, childTypeInfo);
+      CollectSerializedTypesFromProperties(serializedTypes, childTypeInfo);
+    }
+  }
 }
