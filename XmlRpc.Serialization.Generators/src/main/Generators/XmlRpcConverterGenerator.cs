@@ -96,10 +96,10 @@ internal sealed class XmlRpcConverterGenerator(IndentedTextWriter textWriter, Xm
           _ => throw new NotImplementedException($"Unsupported property type {property.Type.Name}"),
         };
 
-        textWriter.WriteLine($"writer.Write(XmlRpcTokenType.StartMember);");
+        textWriter.WriteLine("writer.Write(XmlRpcTokenType.StartMember);");
         textWriter.WriteLine($"writer.WriteElement(\"name\", \"{property.SerializedPropertyName}\");");
         textWriter.WriteLine($"{converterCall}");
-        textWriter.WriteLine($"writer.Write(XmlRpcTokenType.EndMember);");
+        textWriter.WriteLine("writer.Write(XmlRpcTokenType.EndMember);");
       }
     }
     textWriter.EndScope();
