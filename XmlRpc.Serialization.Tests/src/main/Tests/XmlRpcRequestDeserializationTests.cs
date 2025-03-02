@@ -202,6 +202,144 @@ public class XmlRpcRequestDeserializationTests
   }
 
   [Test]
+  public void DeserializeValidStructRequestMultipleParamsInvokesHandler()
+  {
+    const string xml = """
+                       <?xml version="1.0" encoding="UTF-8"?>
+                       <methodCall>
+                       <methodName>TrackMania.EndRace</methodName>
+                       <params>
+                       <param><value><array><data>
+                       <value><struct>
+                       <member><name>Login</name>
+                       <value><string>AAAAaAaAAa0AaAaAaaaaAA</string></value></member>
+                       <member><name>NickName</name>
+                       <value><string>Bla</string></value></member>
+                       <member><name>PlayerId</name>
+                       <value><i4>255</i4></value></member>
+                       <member><name>Rank</name>
+                       <value><i4>1</i4></value></member>
+                       </struct></value>
+                       </data></array></value></param>
+                       <param><value><struct>
+                       <member><name>UId</name>
+                       <value><string>lNP8O0sqatiHqecUXrhH65rpQ8a</string></value></member>
+                       <member><name>Name</name>
+                       <value><string>Training - 03</string></value></member>
+                       <member><name>FileName</name>
+                       <value><string>Campaigns\Training\Training - 03.Map.Gbx</string></value></member>
+                       <member><name>Author</name>
+                       <value><string>Nadeo</string></value></member>
+                       <member><name>AuthorNickname</name>
+                       <value><string>Nadeo</string></value></member>
+                       <member><name>Environnement</name>
+                       <value><string>Stadium</string></value></member>
+                       <member><name>Mood</name>
+                       <value><string>48x48Day</string></value></member>
+                       <member><name>BronzeTime</name>
+                       <value><i4>13000</i4></value></member>
+                       <member><name>SilverTime</name>
+                       <value><i4>10000</i4></value></member>
+                       <member><name>GoldTime</name>
+                       <value><i4>8750</i4></value></member>
+                       <member><name>AuthorTime</name>
+                       <value><i4>8305</i4></value></member>
+                       <member><name>CopperPrice</name>
+                       <value><i4>494</i4></value></member>
+                       <member><name>LapRace</name>
+                       <value><boolean>0</boolean></value></member>
+                       <member><name>NbLaps</name>
+                       <value><i4>0</i4></value></member>
+                       <member><name>NbCheckpoints</name>
+                       <value><i4>1</i4></value></member>
+                       <member><name>MapType</name>
+                       <value><string>TrackMania\TM_Race</string></value></member>
+                       <member><name>MapStyle</name>
+                       <value><string></string></value></member>
+                       </struct></value></param>
+                       </params>
+                       </methodCall>
+                       """;
+
+    List<OnEndRaceInfoRequestPlayerInfo> expectedPlayerInfos =
+    [
+      new OnEndRaceInfoRequestPlayerInfo
+      {
+        Login = "AAAAaAaAAa0AaAaAaaaaAA",
+        NickName = "Bla",
+        PlayerId = 255,
+        Rank = 1,
+      },
+    ];
+
+    OnEndRaceInfoRequestMapInfo expectedMapInfo = new OnEndRaceInfoRequestMapInfo
+    {
+      UId = "lNP8O0sqatiHqecUXrhH65rpQ8a",
+      Name = "Training - 03",
+      FileName = @"Campaigns\Training\Training - 03.Map.Gbx",
+      Author = "Nadeo",
+      AuthorNickname = "Nadeo",
+      Environment = "Stadium",
+      Mood = "48x48Day",
+      BronzeTime = 13000,
+      SilverTime = 10000,
+      GoldTime = 8750,
+      AuthorTime = 8305,
+      CopperPrice = 494,
+      LapRace = false,
+      NbLaps = 0,
+      NbCheckpoints = 1,
+      MapType = "TrackMania\\TM_Race",
+      MapStyle = string.Empty,
+    };
+
+    List<OnEndRaceInfoRequestPlayerInfo>? actualPlayerInfos = null;
+    OnEndRaceInfoRequestMapInfo? actualMapInfo = null;
+
+    OnEndRaceRequestHandler handler = new OnEndRaceRequestHandler((param1, param2) =>
+    {
+      actualPlayerInfos = param1;
+      actualMapInfo = param2;
+    });
+
+    byte[] data = Encoding.UTF8.GetBytes(xml);
+    XmlRpcSerializer.DeserializeRequest(data, handler);
+
+    Assert.That(actualPlayerInfos, Is.Not.Null);
+    Assert.That(actualMapInfo, Is.Not.Null);
+
+    Assert.That(actualPlayerInfos, Has.Count.EqualTo(expectedPlayerInfos.Count));
+    Assert.Multiple(() =>
+    {
+      Assert.That(actualPlayerInfos[0].Login, Is.EqualTo(expectedPlayerInfos[0].Login));
+      Assert.That(actualPlayerInfos[0].NickName, Is.EqualTo(expectedPlayerInfos[0].NickName));
+      Assert.That(actualPlayerInfos[0].PlayerId, Is.EqualTo(expectedPlayerInfos[0].PlayerId));
+      Assert.That(actualPlayerInfos[0].Rank, Is.EqualTo(expectedPlayerInfos[0].Rank));
+    });
+
+    Assert.Multiple(() =>
+    {
+      Assert.That(actualMapInfo.UId, Is.EqualTo(expectedMapInfo.UId));
+      Assert.That(actualMapInfo.Name, Is.EqualTo(expectedMapInfo.Name));
+      Assert.That(actualMapInfo.FileName, Is.EqualTo(expectedMapInfo.FileName));
+      Assert.That(actualMapInfo.Author, Is.EqualTo(expectedMapInfo.Author));
+      Assert.That(actualMapInfo.AuthorNickname, Is.EqualTo(expectedMapInfo.AuthorNickname));
+      Assert.That(actualMapInfo.Environment, Is.EqualTo(expectedMapInfo.Environment));
+      Assert.That(actualMapInfo.Mood, Is.EqualTo(expectedMapInfo.Mood));
+      Assert.That(actualMapInfo.BronzeTime, Is.EqualTo(expectedMapInfo.BronzeTime));
+      Assert.That(actualMapInfo.SilverTime, Is.EqualTo(expectedMapInfo.SilverTime));
+      Assert.That(actualMapInfo.GoldTime, Is.EqualTo(expectedMapInfo.GoldTime));
+      Assert.That(actualMapInfo.AuthorTime, Is.EqualTo(expectedMapInfo.AuthorTime));
+      Assert.That(actualMapInfo.CopperPrice, Is.EqualTo(expectedMapInfo.CopperPrice));
+      Assert.That(actualMapInfo.LapRace, Is.EqualTo(expectedMapInfo.LapRace));
+      Assert.That(actualMapInfo.NbLaps, Is.EqualTo(expectedMapInfo.NbLaps));
+      Assert.That(actualMapInfo.NbCheckpoints, Is.EqualTo(expectedMapInfo.NbCheckpoints));
+      Assert.That(actualMapInfo.MapType, Is.EqualTo(expectedMapInfo.MapType));
+      Assert.That(actualMapInfo.MapStyle, Is.EqualTo(expectedMapInfo.MapStyle));
+    });
+  }
+
+  [Test]
   [TestCase("""
             <?xml version="1.0" encoding="UTF-8"?>
             <methodCall>

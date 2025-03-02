@@ -41,12 +41,20 @@ internal sealed record XmlRpcContextInfo(ClassDeclarationSyntax Context, XmlRpcT
     return stringBuilder.ToString();
   }
 
-  public List<XmlRpcTypeInfo> GetSerializedTypes()
+  public List<XmlRpcTypeInfo> GetSerializedTypesFromProperties()
   {
     Dictionary<INamedTypeSymbol, XmlRpcTypeInfo> serializedTypes = new Dictionary<INamedTypeSymbol, XmlRpcTypeInfo>(SymbolEqualityComparer.Default);
     serializedTypes.Add(SerializedType.Type, SerializedType);
 
     CollectSerializedTypesFromProperties(serializedTypes, SerializedType);
+    return serializedTypes.Values.ToList();
+  }
+
+  public List<XmlRpcTypeInfo> GetSerializedTypesFromMethods()
+  {
+    Dictionary<INamedTypeSymbol, XmlRpcTypeInfo> serializedTypes = new Dictionary<INamedTypeSymbol, XmlRpcTypeInfo>(SymbolEqualityComparer.Default);
+
+    CollectionSerializedTypesFromMethods(serializedTypes, SerializedType);
     return serializedTypes.Values.ToList();
   }
 
@@ -78,6 +86,45 @@ internal sealed record XmlRpcContextInfo(ClassDeclarationSyntax Context, XmlRpcT
 
       serializedTypes.Add(childTypeInfo.Type, childTypeInfo);
       CollectSerializedTypesFromProperties(serializedTypes, childTypeInfo);
+    }
+  }
+
+  private void CollectionSerializedTypesFromMethods(Dictionary<INamedTypeSymbol, XmlRpcTypeInfo> serializedTypes, XmlRpcTypeInfo typeInfo)
+  {
+    foreach (XmlRpcMethodInfo method in typeInfo.Methods)
+    {
+      if (method.Ignored)
+      {
+        continue;
+      }
+
+      foreach (XmlRpcMethodParameterInfo parameter in method.Parameters)
+      {
+        if (parameter.Type is not INamedTypeSymbol type)
+        {
+          continue;
+        }
+
+        switch (parameter.XmlRpcSerializedType)
+        {
+          case XmlRpcSerializedType.UserArray:
+            type = type.TypeArguments.OfType<INamedTypeSymbol>().First();
+            break;
+          case XmlRpcSerializedType.UserStruct:
+            break;
+          default:
+            continue;
+        }
+
+        XmlRpcTypeInfo childTypeInfo = new XmlRpcTypeInfo(type);
+        if (serializedTypes.ContainsKey(childTypeInfo.Type))
+        {
+          continue;
+        }
+
+        serializedTypes.Add(childTypeInfo.Type, childTypeInfo);
+        CollectSerializedTypesFromProperties(serializedTypes, childTypeInfo);
+      }
     }
   }
 }

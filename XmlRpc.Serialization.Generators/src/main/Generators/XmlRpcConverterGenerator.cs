@@ -9,18 +9,18 @@ namespace XmlRpc.Serialization.Generators;
 
 internal sealed class XmlRpcConverterGenerator(IndentedTextWriter textWriter, XmlRpcContextInfo contextInfo, ICollection<XmlRpcTypeInfo> serializableTypes)
 {
-  public void GenerateConverters()
+  public void GenerateConverters(string converterVisibility)
   {
     foreach (XmlRpcTypeInfo typeInfo in serializableTypes)
     {
-      textWriter.WriteLine($"public static readonly XmlRpcValueConverter<{typeInfo.Type}> {typeInfo.Type.Name} = new {typeInfo.Type.Name}ValueConverter();");
+      textWriter.WriteLine($"{converterVisibility} static readonly XmlRpcValueConverter<{typeInfo.Type}> {typeInfo.Type.Name} = new {typeInfo.Type.Name}ValueConverter();");
     }
 
     textWriter.WriteLineNoTabs(string.Empty);
 
     foreach (XmlRpcTypeInfo typeInfo in serializableTypes)
     {
-      textWriter.WriteLine($"public static readonly XmlRpcValueConverter<List<{typeInfo.Type}>> {typeInfo.Type.Name}List = new XmlRpcArrayConverter<{typeInfo.Type.Name}>({typeInfo.Type.Name});");
+      textWriter.WriteLine($"{converterVisibility} static readonly XmlRpcValueConverter<List<{typeInfo.Type}>> {typeInfo.Type.Name}List = new XmlRpcArrayConverter<{typeInfo.Type.Name}>({typeInfo.Type.Name});");
     }
 
     textWriter.WriteLineNoTabs(string.Empty);
