@@ -30,17 +30,21 @@ internal sealed record XmlRpcPropertyInfo
     foreach (AttributeData attribute in attributes)
     {
       string? attributeType = attribute.AttributeClass?.Name;
-      if (attributeType == PropertyNameAttributeClassName)
+      switch (attributeType)
       {
-        string? attributePropertyName = attribute.ConstructorArguments[0].Value?.ToString();
-        if (attributePropertyName != null)
+        case PropertyIgnoreAttributeClassName:
+          Ignored = true;
+          break;
+        case PropertyNameAttributeClassName:
         {
-          SerializedPropertyName = attributePropertyName;
+          string? attributePropertyName = attribute.ConstructorArguments[0].Value?.ToString();
+          if (attributePropertyName != null)
+          {
+            SerializedPropertyName = attributePropertyName;
+          }
+
+          break;
         }
-      }
-      else if (attributeType == PropertyIgnoreAttributeClassName)
-      {
-        Ignored = true;
       }
     }
   }

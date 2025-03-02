@@ -332,7 +332,7 @@ public sealed class XmlRpcResponseDeserializationTests
                        </methodResponse>
                        """;
 
-    PlayerInfoResponse expected = new PlayerInfoResponse
+    PlayerInfoResponse expectedPlayerInfo = new PlayerInfoResponse
     {
       Uptime = 10279,
       NbrConnection = 1,
@@ -365,8 +365,8 @@ public sealed class XmlRpcResponseDeserializationTests
       PacketLossRate = 0.001576D,
     };
 
-    expected.PlayerNetInfos.Add(expectedNetInfo1);
-    expected.PlayerNetInfos.Add(expectedNetInfo2);
+    expectedPlayerInfo.PlayerNetInfos.Add(expectedNetInfo1);
+    expectedPlayerInfo.PlayerNetInfos.Add(expectedNetInfo2);
 
     byte[] data = Encoding.UTF8.GetBytes(xml);
 
@@ -374,30 +374,30 @@ public sealed class XmlRpcResponseDeserializationTests
 
     Assert.Multiple(() =>
     {
-      Assert.That(response.Uptime, Is.EqualTo(expected.Uptime));
-      Assert.That(response.NbrConnection, Is.EqualTo(expected.NbrConnection));
-      Assert.That(response.MeanConnectionTime, Is.EqualTo(expected.MeanConnectionTime));
-      Assert.That(response.MeanNbrPlayer, Is.EqualTo(expected.MeanNbrPlayer));
-      Assert.That(response.RecvNetRate, Is.EqualTo(expected.RecvNetRate));
-      Assert.That(response.SendNetRate, Is.EqualTo(expected.SendNetRate));
-      Assert.That(response.TotalReceivingSize, Is.EqualTo(expected.TotalReceivingSize));
-      Assert.That(response.TotalSendingSize, Is.EqualTo(expected.TotalSendingSize));
-      Assert.That(response.PlayerNetInfos.Count, Is.EqualTo(expected.PlayerNetInfos.Count));
+      Assert.That(response.Uptime, Is.EqualTo(expectedPlayerInfo.Uptime));
+      Assert.That(response.NbrConnection, Is.EqualTo(expectedPlayerInfo.NbrConnection));
+      Assert.That(response.MeanConnectionTime, Is.EqualTo(expectedPlayerInfo.MeanConnectionTime));
+      Assert.That(response.MeanNbrPlayer, Is.EqualTo(expectedPlayerInfo.MeanNbrPlayer));
+      Assert.That(response.RecvNetRate, Is.EqualTo(expectedPlayerInfo.RecvNetRate));
+      Assert.That(response.SendNetRate, Is.EqualTo(expectedPlayerInfo.SendNetRate));
+      Assert.That(response.TotalReceivingSize, Is.EqualTo(expectedPlayerInfo.TotalReceivingSize));
+      Assert.That(response.TotalSendingSize, Is.EqualTo(expectedPlayerInfo.TotalSendingSize));
+      Assert.That(response.PlayerNetInfos.Count, Is.EqualTo(expectedPlayerInfo.PlayerNetInfos.Count));
     });
 
     AssertNetInfo(response.PlayerNetInfos[0], expectedNetInfo1);
     AssertNetInfo(response.PlayerNetInfos[1], expectedNetInfo2);
 
-    void AssertNetInfo(PlayerNetInfo actual, PlayerNetInfo expected)
+    void AssertNetInfo(PlayerNetInfo actualNetInfo, PlayerNetInfo expectedNetInfo)
     {
       Assert.Multiple(() =>
       {
-        Assert.That(actual.Login, Is.EqualTo(expected.Login));
-        Assert.That(actual.IpAddress, Is.EqualTo(expected.IpAddress));
-        Assert.That(actual.StateUpdateLatency, Is.EqualTo(expected.StateUpdateLatency));
-        Assert.That(actual.StateUpdatePeriod, Is.EqualTo(expected.StateUpdatePeriod));
-        Assert.That(actual.LatestNetworkActivity, Is.EqualTo(expected.LatestNetworkActivity));
-        Assert.That(actual.PacketLossRate, Is.EqualTo(expected.PacketLossRate));
+        Assert.That(actualNetInfo.Login, Is.EqualTo(expectedNetInfo.Login));
+        Assert.That(actualNetInfo.IpAddress, Is.EqualTo(expectedNetInfo.IpAddress));
+        Assert.That(actualNetInfo.StateUpdateLatency, Is.EqualTo(expectedNetInfo.StateUpdateLatency));
+        Assert.That(actualNetInfo.StateUpdatePeriod, Is.EqualTo(expectedNetInfo.StateUpdatePeriod));
+        Assert.That(actualNetInfo.LatestNetworkActivity, Is.EqualTo(expectedNetInfo.LatestNetworkActivity));
+        Assert.That(actualNetInfo.PacketLossRate, Is.EqualTo(expectedNetInfo.PacketLossRate));
       });
     }
   }

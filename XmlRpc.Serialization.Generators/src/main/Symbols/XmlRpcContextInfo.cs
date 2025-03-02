@@ -43,6 +43,7 @@ internal sealed record XmlRpcContextInfo(ClassDeclarationSyntax Context, XmlRpcT
 
   public List<XmlRpcTypeInfo> GetSerializedTypesFromProperties()
   {
+    // ReSharper disable once UseObjectOrCollectionInitializer
     Dictionary<INamedTypeSymbol, XmlRpcTypeInfo> serializedTypes = new Dictionary<INamedTypeSymbol, XmlRpcTypeInfo>(SymbolEqualityComparer.Default);
     serializedTypes.Add(SerializedType.Type, SerializedType);
 

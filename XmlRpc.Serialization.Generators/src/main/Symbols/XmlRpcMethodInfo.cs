@@ -26,14 +26,16 @@ internal sealed record XmlRpcMethodInfo
     foreach (AttributeData attribute in attributes)
     {
       string? attributeType = attribute.AttributeClass?.Name;
-      if (attributeType == MethodNameAttributeClassName)
+      if (attributeType != MethodNameAttributeClassName)
       {
-        string? attributeMethodName = attribute.ConstructorArguments[0].Value?.ToString();
-        if (attributeMethodName != null)
-        {
-          SerializedMethodName = attributeMethodName;
-          Ignored = false;
-        }
+        continue;
+      }
+
+      string? attributeMethodName = attribute.ConstructorArguments[0].Value?.ToString();
+      if (attributeMethodName != null)
+      {
+        SerializedMethodName = attributeMethodName;
+        Ignored = false;
       }
     }
 
