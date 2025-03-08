@@ -1,38 +1,50 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
+using XmlRpc.Serialization.Converters.Extended;
 
 namespace XmlRpc.Serialization.Converters;
 
 public static class XmlRpcConverterFactory
 {
-  private static readonly XmlRpcArrayConverter<bool> ArrayBoolConverter = new XmlRpcArrayConverter<bool>(XmlRpcValueBooleanConverter.Instance);
-  private static readonly XmlRpcArrayConverter<int> ArrayIntConverter = new XmlRpcArrayConverter<int>(XmlRpcValueInt32Converter.Instance);
-  private static readonly XmlRpcArrayConverter<double> ArrayDoubleConverter = new XmlRpcArrayConverter<double>(XmlRpcValueDoubleConverter.Instance);
-  private static readonly XmlRpcArrayConverter<string> ArrayStringConverter = new XmlRpcArrayConverter<string>(XmlRpcValueStringConverter.Instance);
-  private static readonly XmlRpcArrayConverter<byte[]> ArrayBase64Converter = new XmlRpcArrayConverter<byte[]>(XmlRpcValueBase64Converter.Instance);
-  private static readonly XmlRpcArrayConverter<DateTime> ArrayDateTimeConverter = new XmlRpcArrayConverter<DateTime>(XmlRpcValueDateTimeConverter.Instance);
+  private static readonly Dictionary<Type, object> BuiltInConverters = new Dictionary<Type, object>
+  {
+    [typeof(bool)] = XmlRpcValueBooleanConverter.Converter,
+    [typeof(int)] = XmlRpcValueInt32Converter.Converter,
+    [typeof(double)] = XmlRpcValueDoubleConverter.Converter,
+    [typeof(string)] = XmlRpcValueStringConverter.Converter,
+    [typeof(DateTime)] = XmlRpcValueDateTimeConverter.Converter,
+    [typeof(byte[])] = XmlRpcValueBase64Converter.Converter,
+
+    [typeof(List<bool>)] = XmlRpcValueBooleanConverter.ArrayConverter,
+    [typeof(List<int>)] = XmlRpcValueInt32Converter.ArrayConverter,
+    [typeof(List<double>)] = XmlRpcValueDoubleConverter.ArrayConverter,
+    [typeof(List<string>)] = XmlRpcValueStringConverter.ArrayConverter,
+    [typeof(List<DateTime>)] = XmlRpcValueDateTimeConverter.ArrayConverter,
+    [typeof(List<byte[]>)] = XmlRpcValueBase64Converter.ArrayConverter,
+
+    [typeof(byte)] = XmlRpcValueByteConverter.Converter,
+    [typeof(char)] = XmlRpcValueCharConverter.Converter,
+    [typeof(short)] = XmlRpcValueInt16Converter.Converter,
+    [typeof(sbyte)] = XmlRpcValueSByteConverter.Converter,
+    [typeof(float)] = XmlRpcValueSingleConverter.Converter,
+    [typeof(ushort)] = XmlRpcValueUInt16Converter.Converter,
+
+    [typeof(List<byte>)] = XmlRpcValueByteConverter.ArrayConverter,
+    [typeof(List<char>)] = XmlRpcValueCharConverter.ArrayConverter,
+    [typeof(List<short>)] = XmlRpcValueInt16Converter.ArrayConverter,
+    [typeof(List<sbyte>)] = XmlRpcValueSByteConverter.ArrayConverter,
+    [typeof(List<float>)] = XmlRpcValueSingleConverter.ArrayConverter,
+    [typeof(List<ushort>)] = XmlRpcValueUInt16Converter.ArrayConverter,
+  };
 
   public static XmlRpcValueConverter<T> GetBuiltInValueConverter<T>()
   {
-    Type type = typeof(T);
-
-    return Type.GetTypeCode(type) switch
+    if (BuiltInConverters.TryGetValue(typeof(T), out object? converter))
     {
-      TypeCode.Boolean => Unsafe.As<XmlRpcValueConverter<T>>(XmlRpcValueBooleanConverter.Instance),
-      TypeCode.Int32 => Unsafe.As<XmlRpcValueConverter<T>>(XmlRpcValueInt32Converter.Instance),
-      TypeCode.Double => Unsafe.As<XmlRpcValueConverter<T>>(XmlRpcValueDoubleConverter.Instance),
-      TypeCode.String => Unsafe.As<XmlRpcValueConverter<T>>(XmlRpcValueStringConverter.Instance),
-      TypeCode.DateTime => Unsafe.As<XmlRpcValueConverter<T>>(XmlRpcValueDateTimeConverter.Instance),
-      TypeCode.Object when type == typeof(byte[]) => Unsafe.As<XmlRpcValueConverter<T>>(XmlRpcValueBase64Converter.Instance),
-      TypeCode.Object when type == typeof(List<bool>) => Unsafe.As<XmlRpcValueConverter<T>>(ArrayBoolConverter),
-      TypeCode.Object when type == typeof(List<int>) => Unsafe.As<XmlRpcValueConverter<T>>(ArrayIntConverter),
-      TypeCode.Object when type == typeof(List<double>) => Unsafe.As<XmlRpcValueConverter<T>>(ArrayDoubleConverter),
-      TypeCode.Object when type == typeof(List<string>) => Unsafe.As<XmlRpcValueConverter<T>>(ArrayStringConverter),
-      TypeCode.Object when type == typeof(List<byte[]>) => Unsafe.As<XmlRpcValueConverter<T>>(ArrayBase64Converter),
-      TypeCode.Object when type == typeof(List<DateTime>) => Unsafe.As<XmlRpcValueConverter<T>>(ArrayDateTimeConverter),
-      _ => throw new SerializationException($"Cannot find XmlRpcValueConverter for type: '{typeof(T).FullName}'"),
-    };
+      return (XmlRpcValueConverter<T>)converter;
+    }
+
+    throw new SerializationException($"Cannot find XmlRpcValueConverter for type: '{typeof(T).FullName}'");
   }
 }

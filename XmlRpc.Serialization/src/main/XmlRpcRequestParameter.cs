@@ -1,6 +1,6 @@
 ﻿using XmlRpc.Serialization.Converters;
 
-namespace XmlRpc.Serialization.Models;
+namespace XmlRpc.Serialization;
 
 public sealed class XmlRpcRequestParameter<T> : IXmlRpcRequestParameter
 {

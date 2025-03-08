@@ -1,6 +1,5 @@
 ﻿using System.Text;
 using NUnit.Framework;
-using XmlRpc.Serialization.Models;
 using XmlRpc.Serialization.Tests.Models;
 
 namespace XmlRpc.Serialization.Tests;

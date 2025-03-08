@@ -66,7 +66,64 @@ public sealed class XmlRpcResponseDeserializationTests
                     </params>
                     </methodResponse>
                     """, "Return an array of all available XML-RPC methods on this server.")]
-  public void DeserializeValidResponseCreatesValidValue<T>(string xml, object value)
+  public void DeserializeValidResponseCreatesValidValue<T>(string xml, T value)
+  {
+    byte[] data = Encoding.UTF8.GetBytes(xml);
+
+    T response = XmlRpcSerializer.DeserializeResponse<T>(data);
+    Assert.That(response, Is.EqualTo(value));
+  }
+
+  [Test]
+  [TestCase<sbyte>("""
+                 <?xml version="1.0" encoding="UTF-8"?>
+                 <methodResponse>
+                 <params>
+                 <param><value><int>-128</int></value></param>
+                 </params>
+                 </methodResponse>
+                 """, sbyte.MinValue)]
+  [TestCase<byte>("""
+                 <?xml version="1.0" encoding="UTF-8"?>
+                 <methodResponse>
+                 <params>
+                 <param><value><int>255</int></value></param>
+                 </params>
+                 </methodResponse>
+                 """, byte.MaxValue)]
+  [TestCase<short>("""
+                 <?xml version="1.0" encoding="UTF-8"?>
+                 <methodResponse>
+                 <params>
+                 <param><value><int>-32768</int></value></param>
+                 </params>
+                 </methodResponse>
+                 """, short.MinValue)]
+  [TestCase<ushort>("""
+                 <?xml version="1.0" encoding="UTF-8"?>
+                 <methodResponse>
+                 <params>
+                 <param><value><int>65535</int></value></param>
+                 </params>
+                 </methodResponse>
+                 """, ushort.MaxValue)]
+  [TestCase<float>("""
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <methodResponse>
+                    <params>
+                    <param><value><double>0.500000</double></value></param>
+                    </params>
+                    </methodResponse>
+                    """, 0.5f)]
+  [TestCase<char>("""
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <methodResponse>
+                    <params>
+                    <param><value>A</value></param>
+                    </params>
+                    </methodResponse>
+                    """, 'A')]
+  public void DeserializeValidResponseExtendedCreatesValidValue<T>(string xml, T value)
   {
     byte[] data = Encoding.UTF8.GetBytes(xml);
 

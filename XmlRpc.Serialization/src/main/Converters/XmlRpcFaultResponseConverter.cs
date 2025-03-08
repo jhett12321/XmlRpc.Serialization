@@ -1,11 +1,10 @@
 ﻿using XmlRpc.Serialization.Exceptions;
-using XmlRpc.Serialization.Models;
 
 namespace XmlRpc.Serialization.Converters;
 
 internal sealed class XmlRpcFaultResponseConverter : XmlRpcStructConverter<XmlRpcFaultResponse>
 {
-  public static readonly XmlRpcFaultResponseConverter Instance = new XmlRpcFaultResponseConverter();
+  public static readonly XmlRpcFaultResponseConverter Converter = new XmlRpcFaultResponseConverter();
 
   protected override void PopulateStructMember(XmlRpcFaultResponse value, string memberName, XmlRpcReader valueReader)
   {

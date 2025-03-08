@@ -22,6 +22,19 @@ public sealed class XmlRpcResponseSerializationTests
   }
 
   [Test]
+  [TestCase<sbyte>("""<?xml version="1.0" encoding="UTF-8"?><methodResponse><params><param><value><i4>-128</i4></value></param></params></methodResponse>""", sbyte.MinValue)]
+  [TestCase<byte>("""<?xml version="1.0" encoding="UTF-8"?><methodResponse><params><param><value><i4>255</i4></value></param></params></methodResponse>""", byte.MaxValue)]
+  [TestCase<short>("""<?xml version="1.0" encoding="UTF-8"?><methodResponse><params><param><value><i4>-32768</i4></value></param></params></methodResponse>""", short.MinValue)]
+  [TestCase<ushort>("""<?xml version="1.0" encoding="UTF-8"?><methodResponse><params><param><value><i4>65535</i4></value></param></params></methodResponse>""", ushort.MaxValue)]
+  [TestCase<float>("""<?xml version="1.0" encoding="UTF-8"?><methodResponse><params><param><value><double>10.5</double></value></param></params></methodResponse>""", 10.5f)]
+  [TestCase<char>("""<?xml version="1.0" encoding="UTF-8"?><methodResponse><params><param><value><string>B</string></value></param></params></methodResponse>""", 'B')]
+  public void SerializeValidResponseExtendedCreatesValidXml<T>(string expectedXml, T value)
+  {
+    byte[] serialized = XmlRpcSerializer.SerializeResponse(value);
+    Assert.That(Encoding.UTF8.GetString(serialized), Is.EqualTo(expectedXml));
+  }
+
+  [Test]
   public void SerializeValidStructResponseCreatesValidXml()
   {
     const string expectedXml = """<?xml version="1.0" encoding="UTF-8"?><methodResponse><params><param><value><struct><member><name>Code</name><value><i4>4</i4></value></member><member><name>Name</name><value><string>Running - Play</string></value></member></struct></value></param></params></methodResponse>""";

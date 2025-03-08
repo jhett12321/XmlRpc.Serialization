@@ -2,7 +2,8 @@
 
 internal sealed class XmlRpcValueInt32Converter : XmlRpcValueConverter<int>
 {
-  public static readonly XmlRpcValueInt32Converter Instance = new XmlRpcValueInt32Converter();
+  public static readonly XmlRpcValueInt32Converter Converter = new XmlRpcValueInt32Converter();
+  public static readonly XmlRpcArrayConverter<int> ArrayConverter = new XmlRpcArrayConverter<int>(Converter);
 
   public override int Deserialize(XmlRpcReader reader)
   {

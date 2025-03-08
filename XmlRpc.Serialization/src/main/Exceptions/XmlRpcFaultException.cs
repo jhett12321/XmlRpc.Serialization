@@ -1,5 +1,4 @@
 ﻿using System;
-using XmlRpc.Serialization.Models;
 
 namespace XmlRpc.Serialization.Exceptions;
 

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using XmlRpc.Serialization.Converters;
 
-namespace XmlRpc.Serialization.Models;
+namespace XmlRpc.Serialization;
 
 public sealed class XmlRpcRequestMessage(string methodName)
 {

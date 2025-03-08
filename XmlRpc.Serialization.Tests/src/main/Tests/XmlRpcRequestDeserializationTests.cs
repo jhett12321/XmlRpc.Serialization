@@ -172,6 +172,77 @@ public class XmlRpcRequestDeserializationTests
   }
 
   [Test]
+  [TestCase<sbyte>("""
+                   <?xml version="1.0" encoding="UTF-8"?>
+                   <methodCall>
+                   <methodName>testMethod1</methodName>
+                   <params>
+                   <param><value><i4>-128</i4></value></param>
+                   </params>
+                   </methodCall>
+                   """, "testMethod1", sbyte.MinValue)]
+  [TestCase<byte>("""
+                 <?xml version="1.0" encoding="UTF-8"?>
+                 <methodCall>
+                 <methodName>testMethod2</methodName>
+                 <params>
+                 <param><value><i4>255</i4></value></param>
+                 </params>
+                 </methodCall>
+                 """, "testMethod2", byte.MaxValue)]
+  [TestCase<short>("""
+                  <?xml version="1.0" encoding="UTF-8"?>
+                  <methodCall>
+                  <methodName>testMethod3</methodName>
+                  <params>
+                  <param><value><i4>-32768</i4></value></param>
+                  </params>
+                  </methodCall>
+                  """, "testMethod3", short.MinValue)]
+  [TestCase<ushort>("""
+                   <?xml version="1.0" encoding="UTF-8"?>
+                   <methodCall>
+                   <methodName>testMethod4</methodName>
+                   <params>
+                   <param><value><i4>65535</i4></value></param>
+                   </params>
+                   </methodCall>
+                   """, "testMethod4", ushort.MaxValue)]
+  [TestCase<float>("""
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <methodCall>
+                    <methodName>testMethod5</methodName>
+                    <params>
+                    <param><value><double>-2.512345</double></value></param>
+                    </params>
+                    </methodCall>
+                    """, "testMethod5", -2.512345f)]
+  [TestCase<char>("""
+                  <?xml version="1.0" encoding="UTF-8"?>
+                  <methodCall>
+                  <params>
+                  <param><value>A</value></param>
+                  </params>
+                  <methodName>testMethod6</methodName>
+                  </methodCall>
+                  """, "testMethod6", 'A')]
+  public void DeserializeValidRequestSingleParamExtendedInvokesHandler<TParam1>(string xml, string methodName, TParam1 expectedParam1)
+  {
+    TParam1? value1 = default;
+    DeserializeRequestHandler handler = new DeserializeRequestHandler();
+
+    handler.AddRequestMethod(methodName, new DeserializeRequestMethod<TParam1>(param1 =>
+    {
+      value1 = param1;
+    }));
+
+    byte[] data = Encoding.UTF8.GetBytes(xml);
+    XmlRpcSerializer.DeserializeRequest(data, handler);
+
+    Assert.That(value1, Is.EqualTo(expectedParam1));
+  }
+
+  [Test]
   [TestCase<string, int>("""
                          <?xml version="1.0" encoding="UTF-8"?>
                          <methodCall>

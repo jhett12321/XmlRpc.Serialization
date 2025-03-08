@@ -1,4 +1,4 @@
-﻿namespace XmlRpc.Serialization.Models;
+﻿namespace XmlRpc.Serialization.Exceptions;
 
 public sealed class XmlRpcFaultResponse
 {

@@ -1,7 +1,6 @@
 ﻿using System.IO;
 using XmlRpc.Serialization.Converters;
 using XmlRpc.Serialization.Exceptions;
-using XmlRpc.Serialization.Models;
 
 namespace XmlRpc.Serialization;
 
@@ -95,7 +94,7 @@ public static class XmlRpcSerializer
       if (response is XmlRpcFaultResponse faultResponse)
       {
         writer.Write(XmlRpcTokenType.StartFault);
-        XmlRpcFaultResponseConverter.Instance.Serialize(writer, faultResponse);
+        XmlRpcFaultResponseConverter.Converter.Serialize(writer, faultResponse);
         writer.Write(XmlRpcTokenType.EndFault);
       }
       else
@@ -140,7 +139,7 @@ public static class XmlRpcSerializer
       }
       case XmlRpcTokenType.StartFault:
       {
-        XmlRpcFaultResponse faultInfo = XmlRpcFaultResponseConverter.Instance.Deserialize(reader);
+        XmlRpcFaultResponse faultInfo = XmlRpcFaultResponseConverter.Converter.Deserialize(reader);
         reader.Read(XmlRpcTokenType.EndFault);
         reader.Read(XmlRpcTokenType.EndMethodResponse);
         reader.Read();

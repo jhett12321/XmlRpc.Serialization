@@ -2,7 +2,8 @@
 
 internal sealed class XmlRpcValueDoubleConverter : XmlRpcValueConverter<double>
 {
-  public static readonly XmlRpcValueDoubleConverter Instance = new XmlRpcValueDoubleConverter();
+  public static readonly XmlRpcValueDoubleConverter Converter = new XmlRpcValueDoubleConverter();
+  public static readonly XmlRpcArrayConverter<double> ArrayConverter = new XmlRpcArrayConverter<double>(XmlRpcValueDoubleConverter.Converter);
 
   public override double Deserialize(XmlRpcReader reader)
   {

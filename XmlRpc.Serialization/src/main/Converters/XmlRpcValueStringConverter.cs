@@ -2,7 +2,8 @@
 
 internal sealed class XmlRpcValueStringConverter : XmlRpcValueConverter<string>
 {
-  public static readonly XmlRpcValueStringConverter Instance = new XmlRpcValueStringConverter();
+  public static readonly XmlRpcValueStringConverter Converter = new XmlRpcValueStringConverter();
+  public static readonly XmlRpcArrayConverter<string> ArrayConverter = new XmlRpcArrayConverter<string>(Converter);
 
   public override string Deserialize(XmlRpcReader reader)
   {

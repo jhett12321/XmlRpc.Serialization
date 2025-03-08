@@ -4,7 +4,8 @@ namespace XmlRpc.Serialization.Converters;
 
 internal sealed class XmlRpcValueDateTimeConverter : XmlRpcValueConverter<DateTime>
 {
-  public static readonly XmlRpcValueDateTimeConverter Instance = new XmlRpcValueDateTimeConverter();
+  public static readonly XmlRpcValueDateTimeConverter Converter = new XmlRpcValueDateTimeConverter();
+  public static readonly XmlRpcArrayConverter<DateTime> ArrayConverter = new XmlRpcArrayConverter<DateTime>(Converter);
 
   public override DateTime Deserialize(XmlRpcReader reader)
   {
