@@ -55,11 +55,11 @@ internal sealed record XmlRpcContextInfo(ClassDeclarationSyntax Context, XmlRpcT
   {
     Dictionary<INamedTypeSymbol, XmlRpcTypeInfo> serializedTypes = new Dictionary<INamedTypeSymbol, XmlRpcTypeInfo>(SymbolEqualityComparer.Default);
 
-    CollectionSerializedTypesFromMethods(serializedTypes, SerializedType);
+    CollectSerializedTypesFromMethods(serializedTypes, SerializedType);
     return serializedTypes.Values.ToList();
   }
 
-  private void CollectSerializedTypesFromProperties(Dictionary<INamedTypeSymbol, XmlRpcTypeInfo> serializedTypes, XmlRpcTypeInfo typeInfo)
+  private static void CollectSerializedTypesFromProperties(Dictionary<INamedTypeSymbol, XmlRpcTypeInfo> serializedTypes, XmlRpcTypeInfo typeInfo)
   {
     foreach (XmlRpcPropertyInfo property in typeInfo.Properties)
     {
@@ -90,7 +90,7 @@ internal sealed record XmlRpcContextInfo(ClassDeclarationSyntax Context, XmlRpcT
     }
   }
 
-  private void CollectionSerializedTypesFromMethods(Dictionary<INamedTypeSymbol, XmlRpcTypeInfo> serializedTypes, XmlRpcTypeInfo typeInfo)
+  private static void CollectSerializedTypesFromMethods(Dictionary<INamedTypeSymbol, XmlRpcTypeInfo> serializedTypes, XmlRpcTypeInfo typeInfo)
   {
     foreach (XmlRpcMethodInfo method in typeInfo.Methods)
     {

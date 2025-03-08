@@ -32,11 +32,13 @@ internal sealed record XmlRpcMethodInfo
       }
 
       string? attributeMethodName = attribute.ConstructorArguments[0].Value?.ToString();
-      if (attributeMethodName != null)
+      if (attributeMethodName == null)
       {
-        SerializedMethodName = attributeMethodName;
-        Ignored = false;
+        continue;
       }
+
+      SerializedMethodName = attributeMethodName;
+      Ignored = false;
     }
 
     if (Ignored)

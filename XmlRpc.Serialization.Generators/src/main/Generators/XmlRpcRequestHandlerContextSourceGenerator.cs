@@ -43,7 +43,7 @@ internal sealed class XmlRpcRequestHandlerContextSourceGenerator : IIncrementalG
     }
   }
 
-  private XmlRpcContextInfo? GetSemanticTargetForGeneration(GeneratorAttributeSyntaxContext context)
+  private static XmlRpcContextInfo? GetSemanticTargetForGeneration(GeneratorAttributeSyntaxContext context)
   {
     if (context.TargetNode is not ClassDeclarationSyntax classDeclaration)
     {
@@ -60,7 +60,7 @@ internal sealed class XmlRpcRequestHandlerContextSourceGenerator : IIncrementalG
     return new XmlRpcContextInfo(classDeclaration, serializedType);
   }
 
-  private string GenerateContextClass(XmlRpcContextInfo contextInfo, SourceProductionContext productionContext)
+  private static string GenerateContextClass(XmlRpcContextInfo contextInfo, SourceProductionContext productionContext)
   {
     using StringWriter stringWriter = new StringWriter();
     using IndentedTextWriter textWriter = new IndentedTextWriter(stringWriter, "  ");

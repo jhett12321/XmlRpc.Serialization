@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using XmlRpc.Serialization.Converters;
 using XmlRpc.Serialization.Exceptions;
 
@@ -56,6 +57,8 @@ public static class XmlRpcSerializer
       case XmlRpcTokenType.StartParams:
         paramsReader = reader.ReadSubtree(true);
         break;
+      default:
+        throw new XmlRpcSerializationException($"Expected node type 'StartMethodName' or 'StartParams' in stream, but got '{reader.TokenType}'.");
     }
 
     switch (reader.TokenType)
@@ -66,6 +69,8 @@ public static class XmlRpcSerializer
       case XmlRpcTokenType.StartParams:
         paramsReader = reader.ReadSubtree(false);
         break;
+      default:
+        break; // No method parameters
     }
 
     if (methodName == null)

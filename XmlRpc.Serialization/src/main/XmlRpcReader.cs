@@ -160,6 +160,8 @@ public sealed class XmlRpcReader : IDisposable
       case XmlRpcTokenType.StartValue:
         valueReader = ReadSubtree(true);
         break;
+      default:
+        throw new XmlRpcSerializationException($"Expected node type 'StartName' or 'StartValue' in stream, but got '{TokenType}'.");
     }
 
     switch (TokenType)
@@ -170,6 +172,8 @@ public sealed class XmlRpcReader : IDisposable
       case XmlRpcTokenType.StartValue:
         valueReader = ReadSubtree(false);
         break;
+      default:
+        throw new XmlRpcSerializationException($"Expected node type 'StartName' or 'StartValue' in stream, but got '{TokenType}'.");
     }
 
     if (name == null || valueReader == null)
