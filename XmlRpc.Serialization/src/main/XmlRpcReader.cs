@@ -85,14 +85,20 @@ public sealed class XmlRpcReader : IDisposable
     }
   }
 
-  public void ReadOrAdvance(XmlRpcTokenType expectedTokenType)
+  /// <summary>
+  /// Validates if the last processed XML-RPC token matches the specified token type.<br/>
+  /// If the token type does not match, the <see cref="XmlRpcReader"/> will attempt to read and validate against the current token type.
+  /// </summary>
+  /// <param name="tokenType">The expected token type.</param>
+  /// <exception cref="XmlRpcSerializationException">Thrown if the last XML-RPC token or current token does not match the specified value.</exception>
+  public void ValidateToken(XmlRpcTokenType tokenType)
   {
-    if (TokenType == expectedTokenType)
+    if (TokenType == tokenType)
     {
       return;
     }
 
-    Read(expectedTokenType);
+    Read(tokenType);
   }
 
   /// <summary>
@@ -125,6 +131,18 @@ public sealed class XmlRpcReader : IDisposable
     return TokenType;
   }
 
+  /// <summary>
+  /// Returns a new <see cref="XmlRpcReader"/> instance that can be used to read the current node, and all its descendants.
+  /// </summary>
+  /// <param name="copy">True to make a copy of the subtree.</param>
+  /// <returns>A new uninitialized <see cref="XmlRpcReader"/> instance. Calling the <see cref="Read()"/> method positions the new reader on the node that was current before the call to the <see cref="ReadSubtree"/> method.</returns>
+  /// <exception cref="InvalidOperationException">Thrown if the <see cref="XmlRpcReader"/> isn't currently positioned on an element node.</exception>
+  /// <remarks>
+  /// <see cref="ReadSubtree"/> can be called only on element nodes. When the entire subtree has been read, calls to the Read method returns false.<br/><br/>
+  /// When copy = false, the parent reader is positioned on the EndElement node of the subtree once the subtree reader has been closed. You should not perform any operations on the parent reader until the subtree reader has been closed<br/><br/>
+  /// When copy = true, the parent reader is immediately positioned on the EndElement node, and the subtree reader can be used independently of the parent reader.<br/><br/>
+  /// When possible, avoid using copy = true as this allocates an additional copy of the subtree xml structure.
+  /// </remarks>
   public XmlRpcReader ReadSubtree(bool copy)
   {
     XmlRpcReader retVal;
@@ -141,6 +159,11 @@ public sealed class XmlRpcReader : IDisposable
     return retVal;
   }
 
+  /// <summary>
+  /// Reads an XML-RPC struct member, using the specified method to deserialize the XML value.
+  /// </summary>
+  /// <param name="readValue">A method to parse the struct member value (string structMemberName, XmlRpcReader valueReader).</param>
+  /// <exception cref="XmlRpcSerializationException">Thrown if an unexpected XML-RPC token is read.</exception>
   public void ReadStructMember(Action<string, XmlRpcReader> readValue)
   {
     string? name = null;
@@ -184,14 +207,14 @@ public sealed class XmlRpcReader : IDisposable
     readValue(name, valueReader);
     valueReader.Dispose();
 
-    ReadOrAdvance(XmlRpcTokenType.EndMember);
+    ValidateToken(XmlRpcTokenType.EndMember);
   }
 
   public T ReadParameter<T>(Func<XmlRpcReader, T> readValue)
   {
-    ReadOrAdvance(XmlRpcTokenType.StartParam);
+    ValidateToken(XmlRpcTokenType.StartParam);
     T retVal = readValue(this);
-    ReadOrAdvance(XmlRpcTokenType.EndParam);
+    ValidateToken(XmlRpcTokenType.EndParam);
 
     return retVal;
   }
@@ -208,7 +231,7 @@ public sealed class XmlRpcReader : IDisposable
 
   public string GetString()
   {
-    ReadOrAdvance(XmlRpcTokenType.StartValue);
+    ValidateToken(XmlRpcTokenType.StartValue);
 
     Read();
 
@@ -295,7 +318,7 @@ public sealed class XmlRpcReader : IDisposable
 
   private string ReadSimpleValueNode(params string[] expectedNodeNames)
   {
-    ReadOrAdvance(XmlRpcTokenType.StartValue);
+    ValidateToken(XmlRpcTokenType.StartValue);
 
     Read();
     ValidateValueNode(XmlNodeType.Element, expectedNodeNames);

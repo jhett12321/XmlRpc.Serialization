@@ -81,7 +81,7 @@ public static class XmlRpcSerializer
     requestHandler.HandleRequestMessage(methodName, paramsReader);
     paramsReader?.Dispose();
 
-    reader.ReadOrAdvance(XmlRpcTokenType.EndMethodCall);
+    reader.ValidateToken(XmlRpcTokenType.EndMethodCall);
     reader.Read();
   }
 
